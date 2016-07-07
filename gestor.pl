@@ -24,10 +24,8 @@ my $registro_text = do {
 # Inventario (items disponibles) ###
 my @inventario =  split /\W/, read_file('inventario');
 
-
 # Pedidos (input) ##################
 my @pedidos = read_file('pedidos.csv');
-
 
 # Registro (almacen de reservas) ###
 my $json = JSON->new;
@@ -42,7 +40,6 @@ foreach (@pedidos){
 	if($_ =~ /^\s*item,mes,/){ # borrrar primera linea
 		next;
 	}
-	
 	consultar($_);
 }
 
@@ -54,16 +51,29 @@ sub consultar{
 
 	if($item ~~ @inventario){ # en inventario?
 		# say "-- $item $mes $dia $hora $duracion";
-		
-		if($reservas{$item}){
-			say "Existen reservas registrdas para: $item.";
 
+		if($reservas{$item}){
+			my @r = @{$reservas{$item}{reservas}};
+			say "- Existen reservas registrdas para: $item.";
+			# my @meses =$reservas{$item}{}
+			foreach (@r){
+
+				for my $key ( keys %$_ ) {
+					say "$key : $_->{$key}";
+				}
+				# comparar mes con el mes de cada $reservas{$item}
+
+			}
 		}else{
-			say "No se encontraron reservas para: $item.";
+			#say "- No se encontraron reservas para: $item.";
+			$reservas{$item} = {"reservas" => [$mes,$dia,$hora,$duracion]};
+			say "- Agregué una reserva para: $_.";
 		}
 
 	}else{
 		say "No existe: $item en el inventario.";
 	}
 }
+
+# print	Dumper(%reservas);
 
