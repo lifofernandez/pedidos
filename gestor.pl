@@ -36,7 +36,7 @@ my %reservas = %$registro;
 
 
 foreach (@pedidos){
-	chomp;
+	#@chomp;
 	if($_ =~ /^\s*item,mes,/){ # borrrar primera linea
 		next;
 	}
@@ -48,36 +48,57 @@ foreach (@pedidos){
 # Subs
 sub consultar{
 	my ($item,$mes,$dia,$hora,$duracion) =  split /\W/, $_;
-	my $p = {mes=>$mes,dia=>$dia,hora=>$hora,duracion =>$duracion};
+	my $p = {mes=>$mes,dia=>$dia,hora=>$hora,duracion=>$duracion};
 
 	# print Dumper($p);
 
 	if($item ~~ @inventario){ # en inventario?
-		 say "\nEvaluando: $item - $mes $dia $hora $duracion ###";
+		say "\nIngresando pedido: $item $mes $dia $hora $duracion";
 
 		if($reservas{$item}){
-			my @r = @{$reservas{$item}{reservas}};
-			my $cuantas_r = scalar @r;
+			my @rs = @{$reservas{$item}{reservas}};
+			my $cuantas_r = scalar @rs;
+
 			say "- Existen $cuantas_r reservas registrdas para: $item.";
-			my $c = 0;
-			foreach (@r){
+			my @reservas_matrix = ();# [$mese][$dia][$hora]=$duracion
+
+
+			my $c = 1;
+			for (@rs){
+				my $l = $_->{duracion};
+				my $h = $_->{hora};
+				my $d = $_->{dia};
+				my $m = $_->{mes};
+
+				$reservas_matrix[$m][$d][$h] = $l;
+				# push @{ $h[$_->{hora}] }, $l;
+				say "+ Matrixeando reserva $c ";
+				say "duracion en la matrix: $reservas_matrix[$m][$d][$h]";
+
+
+				# push @{ $reservas_matrix[$m] }, $l;
+
+				# $reservas_matrix[$m][$d][$h] = $l;
+
+
+			# 	# if ($mes != $_->{mes}){ # comparar mes
+			# 	# 	# push @{$reservas{$item}{reservas}}, $p; # reservo!
+			# 	# 	say "--- hay lugar en mes: $_->{mes} LIBRE";
+			# 	# 	next;
+			# 	# }else{
+			# 	# 	say "--- Mes: $_->{mes} ocupado";
+			# 	# }
+
 				$c++;
-				say "- Evaluando reserva$c q tiene mes $_->{mes}";
-
-
-				if ($mes != $_->{mes}){ # comparar mes
-					# push @{$reservas{$item}{reservas}}, $p; # reservo!
-					say "--- Mes: $_->{mes} LIBRE";
-					next;
-				}else{
-					say "--- Mes: $_->{mes} ocupado";
-				}
-
 			}
+
+
+
+
 		}else{
 			# say "- No se encontraron reservas para: $item.";
 			$reservas{$item} = {"reservas" => [$mes,$dia,$hora,$duracion]};
-			say "- Agregue una reserva para: $_.";
+			say "+ Agregue una reserva para: $_";
 		}
 
 	}else{
@@ -89,4 +110,7 @@ sub reservar{
 
 }
 # print	Dumper(%reservas);
+
+
+
 

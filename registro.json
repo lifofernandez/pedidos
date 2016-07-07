@@ -3,12 +3,12 @@
     "reservas": [{
       "mes": 1,
       "dia": 13,
-      "horario": 6,
+      "hora": 6,
       "duracion": 24
     }, {
       "mes": 2,
       "dia": 13,
-      "horario": 6,
+      "hora": 6,
       "duracion": 12
     }]
   },
@@ -16,13 +16,8 @@
     "reservas": [{
       "mes": 3,
       "dia": 13,
-      "horario": 6,
+      "hora": 6,
       "duracion": 24
-    }, {
-      "mes": 5,
-      "dia": 13,
-      "horario": 6,
-      "duracion": 12
     }]
   }
 }
