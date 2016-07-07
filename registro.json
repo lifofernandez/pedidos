@@ -1,12 +1,12 @@
 {
   "gg": {
     "reservas": [{
-      "mes": 3,
+      "mes": 1,
       "dia": 13,
       "horario": 6,
       "duracion": 24
     }, {
-      "mes": 3,
+      "mes": 2,
       "dia": 13,
       "horario": 6,
       "duracion": 12
@@ -19,7 +19,7 @@
       "horario": 6,
       "duracion": 24
     }, {
-      "mes": 3,
+      "mes": 5,
       "dia": 13,
       "horario": 6,
       "duracion": 12

@@ -48,32 +48,45 @@ foreach (@pedidos){
 # Subs
 sub consultar{
 	my ($item,$mes,$dia,$hora,$duracion) =  split /\W/, $_;
+	my $p = {mes=>$mes,dia=>$dia,hora=>$hora,duracion =>$duracion};
+
+	# print Dumper($p);
 
 	if($item ~~ @inventario){ # en inventario?
-		# say "-- $item $mes $dia $hora $duracion";
+		 say "\nEvaluando: $item - $mes $dia $hora $duracion ###";
 
 		if($reservas{$item}){
 			my @r = @{$reservas{$item}{reservas}};
-			say "- Existen reservas registrdas para: $item.";
-			# my @meses =$reservas{$item}{}
+			my $cuantas_r = scalar @r;
+			say "- Existen $cuantas_r reservas registrdas para: $item.";
+			my $c = 0;
 			foreach (@r){
+				$c++;
+				say "- Evaluando reserva$c q tiene mes $_->{mes}";
 
-				for my $key ( keys %$_ ) {
-					say "$key : $_->{$key}";
+
+				if ($mes != $_->{mes}){ # comparar mes
+					# push @{$reservas{$item}{reservas}}, $p; # reservo!
+					say "--- Mes: $_->{mes} LIBRE";
+					next;
+				}else{
+					say "--- Mes: $_->{mes} ocupado";
 				}
-				# comparar mes con el mes de cada $reservas{$item}
 
 			}
 		}else{
-			#say "- No se encontraron reservas para: $item.";
+			# say "- No se encontraron reservas para: $item.";
 			$reservas{$item} = {"reservas" => [$mes,$dia,$hora,$duracion]};
-			say "- Agregué una reserva para: $_.";
+			say "- Agregue una reserva para: $_.";
 		}
 
 	}else{
-		say "No existe: $item en el inventario.";
+		say "\nNo existe: $item en el inventario ###";
 	}
 }
 
+sub reservar{
+
+}
 # print	Dumper(%reservas);
 
