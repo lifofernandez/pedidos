@@ -59,45 +59,41 @@ sub consultar{
 			my @rs = @{$reservas{$item}{reservas}};
 			my $cuantas_r = scalar @rs;
 
-			say "- Existen $cuantas_r reservas registrdas para: $item.";
-			my @reservas_matrix = ();# [$mese][$dia][$hora]=$duracion
+			say "| Existen $cuantas_r reservas registrdas para: $item";
+			my %reservasMatrix = ();# [$mese][$dia][$hora]=$duracion
 
 
-			my $c = 1;
+			my $c = 0;
 			for (@rs){
 				my $l = $_->{duracion};
 				my $h = $_->{hora};
 				my $d = $_->{dia};
 				my $m = $_->{mes};
 
-				$reservas_matrix[$m][$d][$h] = $l;
+				$reservasMatrix{$m}{$d}{$h} = $l;
+
+
 				# push @{ $h[$_->{hora}] }, $l;
-				say "+ Matrixeando reserva $c ";
-				say "duracion en la matrix: $reservas_matrix[$m][$d][$h]";
-
-
-				# push @{ $reservas_matrix[$m] }, $l;
-
-				# $reservas_matrix[$m][$d][$h] = $l;
-
-
-			# 	# if ($mes != $_->{mes}){ # comparar mes
-			# 	# 	# push @{$reservas{$item}{reservas}}, $p; # reservo!
-			# 	# 	say "--- hay lugar en mes: $_->{mes} LIBRE";
-			# 	# 	next;
-			# 	# }else{
-			# 	# 	say "--- Mes: $_->{mes} ocupado";
-			# 	# }
+				# say "+ Matrixeando reserva $c ";
+				# say "| duracion en la matrix: $reservasMatrix{$m}{$d}{$h}";
+				# print Dumper(%reservasMatrix);
 
 				$c++;
 			}
 
-
+				if($mes ~~ %reservasMatrix){
+					say "| Mes: $mes ocupado, hay q buscar en los dias";
+				}else{
+					say "| Mes: $mes libre, reservo y sigo...";
+					push @{$reservas{$item}{reservas}}, $p; #pushear
+					say "+ CREO Q Agregue la reserva: $_";
+					next;
+				}
 
 
 		}else{
-			# say "- No se encontraron reservas para: $item.";
-			$reservas{$item} = {"reservas" => [$mes,$dia,$hora,$duracion]};
+			say "| No se encontraron reservas para: $item";
+			$reservas{$item} = {"reservas" => [$mes,$dia,$hora,$duracion]}; # Revisar estructura
 			say "+ Agregue una reserva para: $_";
 		}
 
@@ -105,6 +101,7 @@ sub consultar{
 		say "\nNo existe: $item en el inventario ###";
 	}
 }
+print Dumper(%reservas);
 
 sub reservar{
 
