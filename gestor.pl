@@ -53,10 +53,10 @@ sub consultar{
 
 		if($reservas{$item}){
 			my @rs = @{$reservas{$item}{reservas}};
-			my $cuantas_r = scalar @rs;
+			my $itemReservas = scalar @rs;
 
-			say "| Existen $cuantas_r reservas registrdas para: $item";
-			my %reservasMatrix = ();# [$mese][$dia][$hora]=$duracion
+			say "| Existen $itemReservas reservas registrdas para: $item";
+			my %reservasMatrix = (); # [$mese][$dia][$hora]=$duracion
 
 			for (@rs){
 				my $l = $_->{duracion};
@@ -66,13 +66,25 @@ sub consultar{
 				$reservasMatrix{$m}{$d}{$h} = $l;
 			}
 
-			# la papa, ubicamos en la matriz...
+			# la papex, ubicar en la matriz...
 			if($mes ~~ %reservasMatrix){
 				say "| Mes: $mes ocupado, voy a buscar en los dias";
 
 				if($dia ~~ %{$reservasMatrix{$mes}}){
-					say "|| Dia: $dia ocupado, hay q buscar en las horas!!!!!!!!!!";
+					say "|| Dia: $dia ocupado, voy q buscar en las horas!";
+
+					if($hora ~~ %{$reservasMatrix{$mes}{$dia}}){
+					say "||| Hora: $hora ocupado, voy q buscar proxima fecha disponible";
 					# Generar contenido dummy para probar esto
+					# Y agregar que chequee si este hora no esta ocupada por
+					# por otra reserva. (quizas popular las horas con todas las reservas)
+					}else{
+						say "||| Hora: $hora libre, reservo y sigo...";
+						push @{$reservas{$item}{reservas}}, $p;
+						say "+ Agregue la reserva: $_";
+						next;
+					}
+
 				}else{
 					say "|| Dia: $dia libre, reservo y sigo...";
 					push @{$reservas{$item}{reservas}}, $p;
