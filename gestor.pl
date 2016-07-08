@@ -31,7 +31,7 @@ my %reservas = %$registro;
 imprimirReserva();
 
 foreach (@pedidos){
-	# @chomp;
+	#chomp;
 	if($_ =~ /^\s*item,mes,/){ # borrrar primera linea
 		next;
 	}
@@ -71,7 +71,7 @@ sub consultar{
 				say "| Mes: $mes ocupado, voy a buscar en los dias";
 
 				if($dia ~~ %{$reservasMatrix{$mes}}){
-					say "|| Dia: $dia ocupado, hay q buscar en las horas";
+					say "|| Dia: $dia ocupado, hay q buscar en las horas!!!!!!!!!!";
 					# Generar contenido dummy para probar esto
 				}else{
 					say "|| Dia: $dia libre, reservo y sigo...";
@@ -94,7 +94,7 @@ sub consultar{
 		}
 
 	}else{
-		say "\nNo existe: $item en el inventario ###";
+		say "\n No existe: $item en el inventario ###";
 	}
 
 }
@@ -103,13 +103,12 @@ sub consultar{
 
 # Subs
 sub imprimirReserva{
-	print "\n";
 
 	print "# "x2; print "Items Reservados"; print " #"x2;
 	print "\n";
 	foreach my $key ( sort keys %reservas ){
 		my $cuantasReservas = scalar @{$reservas{$key}{reservas}};
-		say "item: $key -> reservas: $cuantasReservas";
+		say "Item: $key -> Reservas: $cuantasReservas";
 	}
 
 }
