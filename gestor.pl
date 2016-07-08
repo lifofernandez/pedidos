@@ -67,25 +67,25 @@ sub consultar{
 			}
 
 			# la papa, ubicamos en la matriz...
-			# if($mes ~~ %reservasMatrix){
-			# 	say "| Mes: $mes ocupado, voy a buscar en los dias";
+			if($mes ~~ %reservasMatrix){
+				say "| Mes: $mes ocupado, voy a buscar en los dias";
 
-			# 	# if($dia ~~ %{$reservasMatrix{$mes}}){
-			# 	# 	say "|| Dia: $dia ocupado, hay q buscar en las horas";
-			# 	# 	# Generar contenido dummy para probar esto
-			# 	# }else{
-			# 	# 	say "|| Dia: $dia libre, reservo y sigo...";
-			# 	# 	push @{$reservas{$item}{reservas}}, $p;
-			# 	# 	say "+ Agregue la reserva: $_";
-			# 	# 	next;
-			# 	# }
+				if($dia ~~ %{$reservasMatrix{$mes}}){
+					say "|| Dia: $dia ocupado, hay q buscar en las horas";
+					# Generar contenido dummy para probar esto
+				}else{
+					say "|| Dia: $dia libre, reservo y sigo...";
+					push @{$reservas{$item}{reservas}}, $p;
+					say "+ Agregue la reserva: $_";
+					next;
+				}
 
-			# }else{
-			# 	say "| Mes: $mes libre, reservo y sigo...";
-			# 	push @{$reservas{$item}{reservas}}, $p;
-			# 	say "+ Agregue la reserva: $_";
-			# 	next;
-			# } # termina matrix
+			}else{
+				say "| Mes: $mes libre, reservo y sigo...";
+				push @{$reservas{$item}{reservas}}, $p;
+				say "+ Agregue la reserva: $_";
+				next;
+			} # termina matrix
 
 		}else{
 			say "| No se encontraron reservas para: $item";
@@ -103,10 +103,13 @@ sub consultar{
 
 # Subs
 sub imprimirReserva{
-# 	my @s = @_;
-	foreach my $key ( keys %reservas ){
+	print "\n";
+
+	print "# "x2; print "Items Reservados"; print " #"x2;
+	print "\n";
+	foreach my $key ( sort keys %reservas ){
 		my $cuantasReservas = scalar @{$reservas{$key}{reservas}};
-		say "key: $key, - reservas: $cuantasReservas";
+		say "item: $key -> reservas: $cuantasReservas";
 	}
 
 }
