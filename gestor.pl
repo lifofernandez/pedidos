@@ -70,15 +70,12 @@ sub consultar{
 			}
 				# la papa, ubicamos en la matriz...
 				if($mes ~~ %reservasMatrix){
-					say "| Mes: $mes ocupado, hay q buscar en los dias";
-					say "tratando de obtener dias";
-					# print Dumper($reservasMatrix{$mes});
+					say "| Mes: $mes ocupado, voy a buscar en los dias";
 					if($dia ~~ %{$reservasMatrix{$mes}}){
 						say "|| Dia: $dia ocupado, hay q buscar en las horas";
-
-
+						# Generar contenido dummy para probar esto
 					}else{
-						say "| Dia: $dia libre, reservo y sigo...";
+						say "|| Dia: $dia libre, reservo y sigo...";
 						push @{$reservas{$item}{reservas}}, $p;
 						say "+ Agregue la reserva: $_";
 						next;
