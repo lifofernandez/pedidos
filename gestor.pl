@@ -28,16 +28,17 @@ my $registro = $json->decode($registro_text);
 
 my %reservas = %$registro;
 
-
+imprimirReserva();
 
 foreach (@pedidos){
-	#@chomp;
+	# @chomp;
 	if($_ =~ /^\s*item,mes,/){ # borrrar primera linea
 		next;
 	}
 	consultar($_);
 }
 
+imprimirReserva();
 
 
 # Subs
@@ -57,54 +58,56 @@ sub consultar{
 			say "| Existen $cuantas_r reservas registrdas para: $item";
 			my %reservasMatrix = ();# [$mese][$dia][$hora]=$duracion
 
-			my $c = 0;
 			for (@rs){
 				my $l = $_->{duracion};
 				my $h = $_->{hora};
 				my $d = $_->{dia};
 				my $m = $_->{mes};
-
 				$reservasMatrix{$m}{$d}{$h} = $l;
-
-				$c++;
 			}
-				# la papa, ubicamos en la matriz...
-				if($mes ~~ %reservasMatrix){
-					say "| Mes: $mes ocupado, voy a buscar en los dias";
-					if($dia ~~ %{$reservasMatrix{$mes}}){
-						say "|| Dia: $dia ocupado, hay q buscar en las horas";
-						# Generar contenido dummy para probar esto
-					}else{
-						say "|| Dia: $dia libre, reservo y sigo...";
-						push @{$reservas{$item}{reservas}}, $p;
-						say "+ Agregue la reserva: $_";
-						next;
-					}
 
-				}else{
-					say "| Mes: $mes libre, reservo y sigo...";
-					push @{$reservas{$item}{reservas}}, $p;
-					say "+ Agregue la reserva: $_";
-					next;
-				}
+			# la papa, ubicamos en la matriz...
+			# if($mes ~~ %reservasMatrix){
+			# 	say "| Mes: $mes ocupado, voy a buscar en los dias";
 
+			# 	# if($dia ~~ %{$reservasMatrix{$mes}}){
+			# 	# 	say "|| Dia: $dia ocupado, hay q buscar en las horas";
+			# 	# 	# Generar contenido dummy para probar esto
+			# 	# }else{
+			# 	# 	say "|| Dia: $dia libre, reservo y sigo...";
+			# 	# 	push @{$reservas{$item}{reservas}}, $p;
+			# 	# 	say "+ Agregue la reserva: $_";
+			# 	# 	next;
+			# 	# }
+
+			# }else{
+			# 	say "| Mes: $mes libre, reservo y sigo...";
+			# 	push @{$reservas{$item}{reservas}}, $p;
+			# 	say "+ Agregue la reserva: $_";
+			# 	next;
+			# } # termina matrix
 
 		}else{
 			say "| No se encontraron reservas para: $item";
-			$reservas{$item} = {"reservas" => [$mes,$dia,$hora,$duracion]}; # Revisar estructura
+			$reservas{$item} = {"reservas" => [$p]}; # Revisar estructura
 			say "+ Agregue una reserva para: $_";
 		}
 
 	}else{
 		say "\nNo existe: $item en el inventario ###";
 	}
-}
-# print Dumper(%reservas);
-
-sub reservar{
 
 }
 
 
 
+# Subs
+sub imprimirReserva{
+# 	my @s = @_;
+	foreach my $key ( keys %reservas ){
+		my $cuantasReservas = scalar @{$reservas{$key}{reservas}};
+		say "key: $key, - reservas: $cuantasReservas";
+	}
+
+}
 
