@@ -16,11 +16,6 @@ my $registro_text = do {
    <$json_fh>
 };
 
-
-
-
-
-
 # Inventario (items disponibles) ###
 my @inventario =  split /\W/, read_file('inventario');
 
@@ -62,7 +57,6 @@ sub consultar{
 			say "| Existen $cuantas_r reservas registrdas para: $item";
 			my %reservasMatrix = ();# [$mese][$dia][$hora]=$duracion
 
-
 			my $c = 0;
 			for (@rs){
 				my $l = $_->{duracion};
@@ -72,21 +66,28 @@ sub consultar{
 
 				$reservasMatrix{$m}{$d}{$h} = $l;
 
-
-				# push @{ $h[$_->{hora}] }, $l;
-				# say "+ Matrixeando reserva $c ";
-				# say "| duracion en la matrix: $reservasMatrix{$m}{$d}{$h}";
-				# print Dumper(%reservasMatrix);
-
 				$c++;
 			}
-
+				# la papa, ubicamos en la matriz...
 				if($mes ~~ %reservasMatrix){
 					say "| Mes: $mes ocupado, hay q buscar en los dias";
+					say "tratando de obtener dias";
+					# print Dumper($reservasMatrix{$mes});
+					if($dia ~~ %{$reservasMatrix{$mes}}){
+						say "|| Dia: $dia ocupado, hay q buscar en las horas";
+
+
+					}else{
+						say "| Dia: $dia libre, reservo y sigo...";
+						push @{$reservas{$item}{reservas}}, $p;
+						say "+ Agregue la reserva: $_";
+						next;
+					}
+
 				}else{
 					say "| Mes: $mes libre, reservo y sigo...";
-					push @{$reservas{$item}{reservas}}, $p; #pushear
-					say "+ CREO Q Agregue la reserva: $_";
+					push @{$reservas{$item}{reservas}}, $p;
+					say "+ Agregue la reserva: $_";
 					next;
 				}
 
@@ -101,12 +102,11 @@ sub consultar{
 		say "\nNo existe: $item en el inventario ###";
 	}
 }
-print Dumper(%reservas);
+# print Dumper(%reservas);
 
 sub reservar{
 
 }
-# print	Dumper(%reservas);
 
 
 
