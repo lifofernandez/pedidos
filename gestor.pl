@@ -107,7 +107,7 @@ sub consultar{
 						# push @{$reservas{$item}{reservas}}, $pedidoItem;
 						# say "+ Agregue la reserva: $_";
 
-						reservar(@{$registros{$item}{reservas}}, $pedidoItem);
+						reservar($registros{$item}{reservas}, $pedidoItem);
 						next;
 					}
 
@@ -143,8 +143,12 @@ sub reservar{
 	# * Ver si la duración no pisa otra fecha
 	#   Dar opción o cortar y avisar ?
 
-	print Dumper(@_);
-	# push @{@rs}, $pedidoItem;
+	print Dumper($_[0]);
+	my $p = @_[-1];
+	print Dumper($p);
+	push $_[0], $p;
+	print Dumper($_[0]);
+
 	# print Dumper(@rs);
 	# say "+ Agregue la reserva: $_. CONTINUO";
 
@@ -169,7 +173,6 @@ sub imprimirReserva{
 		my $cuantasReservas = scalar @{$registros{$key}{reservas}};
 		say "Item: $key -> $cuantasReservas reservas";
 	}
-	header('#');
 }
 
 
