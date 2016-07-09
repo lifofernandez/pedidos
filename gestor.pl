@@ -29,7 +29,7 @@ my $registroJson = $json->decode($registro_text); # Cambiar nombre Registro
 my %registros = %$registroJson;
 
 
-imprimirReserva();
+informeReservas();
 
 foreach (@pedidos){
 	#chomp;
@@ -39,7 +39,7 @@ foreach (@pedidos){
 	consultar($_);
 }
 
-imprimirReserva();
+informeReservas();
 
 
 
@@ -138,7 +138,9 @@ sub consultar{
 
 }
 
-sub reservar{
+# Subs
+
+sub reservar {
 
 	# Antes de agregar tengo QUE:
 	# * Ver si la duración no pisa otra fecha
@@ -146,17 +148,14 @@ sub reservar{
 
 	my $p = $_[-1];
 	push $_[0], $p;
+
 	# mostrar esto en la matrix para ver que estebien
 	print "+ Agregue la reserva: ";
 	print_hash($_[0][-1]);
 
 }
 
-
-
-
-# Subs
-sub imprimirReserva {
+sub informeReservas {
 
 	header('Items Reservados');
 	foreach my $key ( sort keys %registros ){
