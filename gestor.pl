@@ -24,16 +24,16 @@ my @pedidos = read_file('pedidos.csv');
 
 # Registro (almacen de reservas) ###
 my $json = JSON->new;
-my $registro = $json->decode($registro_text);
+my $registroJson = $json->decode($registro_text); # Cambiar nombre Registro
 
-my %reservas = %$registro;
+my %registros = %$registroJson;
 
 
 imprimirReserva();
 
 foreach (@pedidos){
 	#chomp;
-	if($_ =~ /^\s*item,mes,/){ # borrrar primera linea
+	if( $_ =~ /^\s*item,mes,/ ){ # borrrar primera linea
 		next;
 	}
 	consultar($_);
@@ -46,20 +46,24 @@ imprimirReserva();
 # Subs
 sub consultar{
 	my ($item,$mes,$dia,$hora,$duracion) =  split /\W/, $_;
-	my $pedido = {mes=>$mes,dia=>$dia,hora=>$hora,duracion=>$duracion};
+	my $pedidoItem = {
+		# item =>		$item,
+		mes =>		$mes,
+		dia =>		$dia,
+		hora =>		$hora,
+		duracion => $duracion
+	};
 
 	# AGREGAR CAMPOS: COMENTARIO Y FAMILIA/TIPO
-	# print Dumper($pedido);
+	# print Dumper($pedidoItem);
 	header($item);
 	if($item ~~ @inventario){ # en inventario?
-
 		say "Ingresando pedido: $item $mes $dia $hora $duracion";
 
-		if($reservas{$item}){
-			my @rs = @{$reservas{$item}{reservas}};
-			my $nReservasEnItem = scalar @rs;
-
-			say "| Existen $nReservasEnItem reservas registrdas para: $item";
+		if($registros{$item}){ #esto se va lamar registros{item}
+			my @reservasItem = @{$registros{$item}{reservas}};
+			my $nReservasItem = scalar @reservasItem;
+			say "| Existen $nReservasItem reservas registrdas para: $item";
 
 			# Encapsular !!!!
 			# MATRIX de reservas que tiene hasta el momento el item
@@ -67,17 +71,17 @@ sub consultar{
 			# YA VA DECANTAR CUANDO GRABE ESTOS REGISTROS
 
 			my %reservasMatrix = (); # {$mese}{$dia}$hora} = $duracion
-			for (@rs){
+			for (@reservasItem){
 				my $l = $_->{duracion};
 				my $h = $_->{hora};
 				my $d = $_->{dia};
 				my $m = $_->{mes};
 				$reservasMatrix{$m}{$d}{$h} = $l;
-
 			}
 
-			# Buscar lugar libre en la matriz...
 
+
+			# Buscar lugar libre en la matriz...
 			if($mes ~~ %reservasMatrix){
 				say "| Mes: $mes ocupado, voy a buscar en los dias!";
 
@@ -92,43 +96,38 @@ sub consultar{
 						#   AKA Cuando vuelve el item
 
 					}else{
+						say "||| Hora: $hora libre !";
 
-						# ENCAPSULAR !!!!
 
 						# Antes de agregar tengo QUE:
-						# * Ver si la duración no pisa otra fecha
+						# * Ver si la duración no pisa otra reserva
 						#   Dar opción o cortar y avisar...
 
-						say "||| Hora: $hora libre, reservo y sigo...";
-						push @{$reservas{$item}{reservas}}, $pedido;
-						say "+ Agregue la reserva: $_";
+						# ENCAPSULAR !!!!
+						# push @{$reservas{$item}{reservas}}, $pedidoItem;
+						# say "+ Agregue la reserva: $_";
 
-						# Despues / ademas de agregar tengo QUE:
-						# * RESERVAR proximas {horas} a partir de la duracion
-						# for i < $l
-						# 	%reservas mes dia {i} = 0 # marcar / inhabilitar
-						# }
-
+						reservar(@{$registros{$item}{reservas}}, $pedidoItem);
 						next;
 					}
 
 				}else{
 					say "|| Dia: $dia libre, reservo y sigo...";
-					push @{$reservas{$item}{reservas}}, $pedido;
+					push @{$registros{$item}{reservas}}, $pedidoItem;
 					say "+ Agregue la reserva: $_";
 					next;
 				}
 
 			}else{
 				say "| Mes: $mes libre, reservo y sigo...";
-				push @{$reservas{$item}{reservas}}, $pedido;
+				push @{$registros{$item}{reservas}}, $pedidoItem;
 				say "+ Agregue la reserva: $_";
 				next;
 			} # Termina matrix
 
 		}else{
 			say "| No se encontraron reservas para: $item";
-			$reservas{$item} = {"reservas" => [$pedido]}; # Revisar estructura
+			$registros{$item} = {"reservas" => [$pedidoItem]}; # Revisar estructura
 			say "+ Agregue una reserva para: $_";
 		}
 
@@ -137,6 +136,43 @@ sub consultar{
 	}
 
 }
+
+sub reservar{
+
+	# Antes de agregar tengo QUE:
+	# * Ver si la duración no pisa otra fecha
+	#   Dar opción o cortar y avisar ?
+
+	print Dumper(@_);
+	# push @{@rs}, $pedidoItem;
+	# print Dumper(@rs);
+	# say "+ Agregue la reserva: $_. CONTINUO";
+
+	# Despues / ademas de agregar tengo QUE:
+	# * RESERVAR proximas {horas} a partir de la duracion
+	# for i < $l
+	# 	%reservas mes dia {i} = 0 # marcar / inhabilitar
+	# }
+
+return
+
+}
+
+
+
+
+# Subs
+sub imprimirReserva{
+
+	header('Items Reservados');
+	foreach my $key ( sort keys %registros ){
+		my $cuantasReservas = scalar @{$registros{$key}{reservas}};
+		say "Item: $key -> $cuantasReservas reservas";
+	}
+	header('#');
+}
+
+
 
 sub header{
 	print "\n";
@@ -150,16 +186,3 @@ sub header{
 	print "\n";
 
 }
-
-
-# Subs
-sub imprimirReserva{
-
-	header('Items Reservados');
-	foreach my $key ( sort keys %reservas ){
-		my $cuantasReservas = scalar @{$reservas{$key}{reservas}};
-		say "Item: $key -> $cuantasReservas reservas";
-	}
-	header('#');
-}
-
