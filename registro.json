@@ -18,6 +18,12 @@
       "dia": 13,
       "hora": 6,
       "duracion": 24
+    },
+  {
+      "mes": 3,
+      "dia": 13,
+      "hora": 6,
+      "duracion": 1
     }]
   }
 }
