@@ -11,7 +11,7 @@ use JSON qw( );
 my $filename = 'registro.json';
 my $registro_text = do {
    open(my $json_fh, "<:encoding(UTF-8)", $filename)
-      or die("Can't open \$filename\": $!\n");
+	  or die("Can't open \$filename\": $!\n");
    local $/;
    <$json_fh>
 };
@@ -48,9 +48,9 @@ sub consultar{
 	my ($item,$mes,$dia,$hora,$duracion) =  split /\W/, $_;
 	my $pedidoItem = {
 		# item =>		$item,
-		mes =>		$mes,
-		dia =>		$dia,
-		hora =>		$hora,
+		mes => $mes,
+		dia => $dia,
+		hora => $hora,
 		duracion => $duracion
 	};
 
@@ -83,52 +83,53 @@ sub consultar{
 
 			# Buscar lugar libre en la matriz...
 			if($mes ~~ %reservasMatrix){
-				say "| Mes: $mes ocupado, voy a buscar en los dias!";
+				say "| Mes: $mes ocupado, voy a buscar en los dias:";
 
 				if($dia ~~ %{$reservasMatrix{$mes}}){
-					say "|| Dia: $dia ocupado, voy q buscar en las horas!";
+					say "|| Dia: $dia ocupado, voy q buscar en las horas:";
 
 					if($hora ~~ %{$reservasMatrix{$mes}{$dia}}){
-						say "||| Hora: $hora ocupada, hay q buscar otra fecha disponible!";
+						say "||| Hora: $hora ocupada, hay q buscar otra fecha disponible:";
 
 						# LISTO hasta aca tengo QUE:
 						# * Mostrar algo como el proximo dia mes hora disponible
 						#   AKA Cuando vuelve el item
 
 					}else{
-						say "||| Hora: $hora libre !";
+						say "||| Hora: $hora libre!";
 
 
 						# Antes de agregar tengo QUE:
 						# * Ver si la duración no pisa otra reserva
-						#   Dar opción o cortar y avisar...
-
-						# ENCAPSULAR !!!!
-						# push @{$reservas{$item}{reservas}}, $pedidoItem;
-						# say "+ Agregue la reserva: $_";
+						#   Dar opción o cortar y avisar..
 
 						reservar($registros{$item}{reservas}, $pedidoItem);
-						next;
+						say "continuo."; next;
+						# Despues / ademas de agregar tengo QUE:
+						# * RESERVAR proximas {horas} a partir de la duracion
+						# for i < $l
+						# 	%reservas mes dia {i} = 0 # marcar / inhabilitar
+						# }
 					}
 
 				}else{
-					say "|| Dia: $dia libre, reservo y sigo...";
-					push @{$registros{$item}{reservas}}, $pedidoItem;
-					say "+ Agregue la reserva: $_";
+					say "|| Dia: $dia libre!";
+					reservar($registros{$item}{reservas}, $pedidoItem);
+					say "continuo."; next;
 					next;
 				}
 
 			}else{
-				say "| Mes: $mes libre, reservo y sigo...";
-				push @{$registros{$item}{reservas}}, $pedidoItem;
-				say "+ Agregue la reserva: $_";
+				say "| Mes: $mes libre!";
+				reservar($registros{$item}{reservas}, $pedidoItem);
+				say "continuo."; next;
 				next;
 			} # Termina matrix
 
 		}else{
 			say "| No se encontraron reservas para: $item";
 			$registros{$item} = {"reservas" => [$pedidoItem]}; # Revisar estructura
-			say "+ Agregue una reserva para: $_";
+			say "Creo primer registro, continuo."; next;
 		}
 
 	}else{
@@ -143,22 +144,11 @@ sub reservar{
 	# * Ver si la duración no pisa otra fecha
 	#   Dar opción o cortar y avisar ?
 
-	print Dumper($_[0]);
-	my $p = @_[-1];
-	print Dumper($p);
+	my $p = $_[-1];
 	push $_[0], $p;
-	print Dumper($_[0]);
-
-	# print Dumper(@rs);
-	# say "+ Agregue la reserva: $_. CONTINUO";
-
-	# Despues / ademas de agregar tengo QUE:
-	# * RESERVAR proximas {horas} a partir de la duracion
-	# for i < $l
-	# 	%reservas mes dia {i} = 0 # marcar / inhabilitar
-	# }
-
-return
+	# mostrar esto en la matrix para ver que estebien
+	print "+ Agregue la reserva: ";
+	print_hash($_[0][-1]);
 
 }
 
@@ -166,7 +156,7 @@ return
 
 
 # Subs
-sub imprimirReserva{
+sub imprimirReserva {
 
 	header('Items Reservados');
 	foreach my $key ( sort keys %registros ){
@@ -175,11 +165,16 @@ sub imprimirReserva{
 	}
 }
 
-
-
-sub header{
+sub print_hash {
+	my $href = shift;
+	print "$_:$href->{$_} " for keys %{$href};
 	print "\n";
-    my $s = shift;
+
+}
+
+sub header {
+	print "\n";
+	my $s = shift;
 	my $l = length $s;
 	my $dif = 26 - $l;
 	print "### ";
@@ -187,5 +182,4 @@ sub header{
 	print " ";
 	print "#"x$dif;
 	print "\n";
-
 }
