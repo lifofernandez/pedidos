@@ -63,8 +63,8 @@ sub consultar{
 	if($item ~~ @inventario){ # en inventario?
 		say "Ingresando pedido: $item $mes $dia $hora $duracion";
 
-		if($registros{$item}){ #esto se va lamar registros{item}
-			my @reservasItem = @{$registros{$item}{reservas}};
+		if($registros{$item}){
+			my @reservasItem = @{$registros{$item}{reservas}}; # copy
 			my $nReservasItem = scalar @reservasItem;
 			say "| Existen $nReservasItem reservas registrdas para: $item";
 
@@ -82,7 +82,9 @@ sub consultar{
 			}
 
 			# Buscar lugar libre en la matriz...
-			# ??? Encapsular buscarenmatrix(matriz, pedido) para poder hacer recursivo
+			# ??? Encapsular buscarEnMatrix()
+
+			# (matriz, pedido) para poder hacer recursivo
 			# en duraciones mayores a 1
 
 			if($mes ~~ %reservasMatrix){
@@ -101,7 +103,6 @@ sub consultar{
 
 					}else{
 						say "||| Hora: $hora libre!";
-
 
 						# Temas relacionados a la duracion del pedido...
 
@@ -131,15 +132,26 @@ sub consultar{
 						# poniendo valores de durcion decendentes (duracion - i )
 						# que hay entre el hago que cuqndo sea 1 termine el loop
 
-
 						# Evaluar duracion:
 
 						if($duracion > 1){
-							say "Duracion mayor a 1 hr (deberia reservar las proximas $duracion hs)";
-							say "por ahora, continuo."; next;
+							say "Duracion mayor a 1hr... ";
+							say "(deberia reservar las proximas $duracion hs)";
+							say "por ahora no reservo nada y continuo."; next;
+
+
+							# Para Reservar duraciones > 1 se me ocurren
+							# 2 opciones:
+
+							# Me llevo este condicional mas arriba asi
+							# me fijo antes si la duracion no pisa nada
+							# antes de procesar entonces para cuando llea aca
+							# ya se que  esta tdo bien y puedo reservar piolamente.
+							# de reservarlo.
+
 						}else{
 							# Antes de agregar tengo QUE:
-							reservarHora($registros{$item}{reservas}, $pedidoItem);
+							reservarPedido($registros{$item}{reservas}, $pedidoItem);
 							say "continuo."; next;
 						}
 					}
@@ -150,7 +162,7 @@ sub consultar{
 					# Habria que estar seguros que la duracion no pisa otra
 					# reserva del proximo dia...
 
-					reservarHora($registros{$item}{reservas}, $pedidoItem);
+					reservarPedido($registros{$item}{reservas}, $pedidoItem);
 					say "continuo."; next;
 					next;
 				}
@@ -161,14 +173,14 @@ sub consultar{
 				# Habria que estar seguros que la duracion no pisa otra
 				# reserva del proximo dia..
 
-				reservarHora($registros{$item}{reservas}, $pedidoItem);
+				reservarPedido($registros{$item}{reservas}, $pedidoItem);
 				say "continuo."; next;
 				next;
 			} # Termina matrix
 
 		}else{
 			say "| No se encontraron reservas para: $item";
-			$registros{$item} = {"reservas" => [$pedidoItem]}; # Revisar estructura
+			$registros{$item} = {"reservas" => [$pedidoItem]};
 			say "Creo primer registro para este item,\ncontinuo."; next;
 		}
 
@@ -178,13 +190,25 @@ sub consultar{
 
 }
 
-# Subs
-
-
-sub reservarHora {
+# Subrutinas
+sub reservarPedido {
 
 	my $p = $_[-1];
 	push $_[0], $p;
+
+	# cuando los pedidos lleguen con la duracion chequeada vamos a
+	# poder hacer algo como esto:
+	# for ($i = 0, $i < $p{duracion}, $i++){
+	# 	my $pedidoHijo = {
+	# 		# item =>$item,
+	# 		mes => $mes,
+	# 		dia => $dia,
+	# 		hora => $hora,
+	# 		duracion => $duracion-$i,
+	# 	};
+	# reservarPedido($registros{$item}{reservas}, $pedidoHijo);
+	# }
+
 
 	# mostrar esto en la matrix para ver que estebien
 	print "+ Agregue la reserva: ";
@@ -193,7 +217,7 @@ sub reservarHora {
 }
 
 sub informePedido {
-	header('informe de Pedidos');
+	header('Informe de Pedidos');
 
 	# foreach my $key ( sort keys %registros ){
 	# 	my $cuantasReservas = scalar @{$registros{$key}{reservas}};
@@ -202,7 +226,7 @@ sub informePedido {
 }
 
 sub informeReservas {
-	header('informe de Registros');
+	header('Informe de Registros');
 
 	foreach my $key ( sort keys %registros ){
 		my $cuantasReservas = scalar @{$registros{$key}{reservas}};
