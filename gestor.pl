@@ -53,8 +53,11 @@ sub consultar{
 		duracion => $duracion
 	};
 
+	# Limitar/filtrar  mes (1..12) dia (1...dias en el mes) hora(1..24)
 	# AGREGAR CAMPOS: COMENTARIO Y FAMILIA/TIPO
+
 	# print Dumper($pedidoItem);
+
 	header($item);
 
 	if($item ~~ @inventario){ # en inventario?
@@ -79,7 +82,7 @@ sub consultar{
 			}
 
 			# Buscar lugar libre en la matriz...
-			# Encapsular (matriz, pedido) para poder hacer recursivo
+			# ??? Encapsular buscarenmatrix(matriz, pedido) para poder hacer recursivo
 			# en duraciones mayores a 1
 
 			if($mes ~~ %reservasMatrix){
@@ -132,8 +135,7 @@ sub consultar{
 						# Evaluar duracion:
 
 						if($duracion > 1){
-							say "Duracion mayor q 1... ";
-							say "(deberia reservar las proximas $duracion hs)";
+							say "Duracion mayor a 1 hr (deberia reservar las proximas $duracion hs)";
 							say "por ahora, continuo."; next;
 						}else{
 							# Antes de agregar tengo QUE:
@@ -144,6 +146,10 @@ sub consultar{
 
 				}else{
 					say "|| Dia: $dia libre!";
+
+					# Habria que estar seguros que la duracion no pisa otra
+					# reserva del proximo dia...
+
 					reservarHora($registros{$item}{reservas}, $pedidoItem);
 					say "continuo."; next;
 					next;
@@ -151,6 +157,10 @@ sub consultar{
 
 			}else{
 				say "| Mes: $mes libre!";
+
+				# Habria que estar seguros que la duracion no pisa otra
+				# reserva del proximo dia..
+
 				reservarHora($registros{$item}{reservas}, $pedidoItem);
 				say "continuo."; next;
 				next;
@@ -182,9 +192,18 @@ sub reservarHora {
 
 }
 
-sub informeReservas {
+sub informePedido {
+	header('informe de Pedidos');
 
-	header('Items Reservados');
+	# foreach my $key ( sort keys %registros ){
+	# 	my $cuantasReservas = scalar @{$registros{$key}{reservas}};
+	# 	say "Item: $key -> $cuantasReservas reservas";
+	# }
+}
+
+sub informeReservas {
+	header('informe de Registros');
+
 	foreach my $key ( sort keys %registros ){
 		my $cuantasReservas = scalar @{$registros{$key}{reservas}};
 		say "Item: $key -> $cuantasReservas reservas";
