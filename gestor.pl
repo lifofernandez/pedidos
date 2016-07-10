@@ -79,9 +79,9 @@ sub consultar{
 			}
 
 			# Buscar lugar libre en la matriz...
-			# encapsular (matriz, pedido) para poder hacer recursivo
-
+			# Encapsular (matriz, pedido) para poder hacer recursivo
 			# en duraciones mayores a 1
+
 			if($mes ~~ %reservasMatrix){
 				say "| Mes: $mes ocupado, voy a buscar en los dias...";
 
@@ -99,18 +99,21 @@ sub consultar{
 					}else{
 						say "||| Hora: $hora libre!";
 
+
+						# Temas relacionados a la duracion del pedido...
+
 						# ??? Ordenar la matriz ???
-						# ??? para consular horas/tiempo hasta proxima reserva ???
-						# para preguntar: Quiere guardar la reserva ( tenga en
-						# cuenta debera devolver el item antes... )?
+						# ??? para consular horas / tiempo hasta proxima reserva ???
+						# para preguntar: Quiere guardar la reserva? (tenga en
+						# cuenta debera devolver el item antes)
 
 						# Si dice que SI, recursivear hasta que "choque"
 						# con una hora ocupada y ?continue?.
-						# ??? poner limite de 24 horas ???
+						# ??? poner limite de hora + duracion < 24 ???
 
 						# Si dice que NO, exit!
 
-						# armar ARRAY de PEDIDOS X proximas horas
+						# Armar ARRAY de PEDIDOS X proximas horas
 						# desde ahora hasta $duracion
 
 						# CALCULAR SALTOS DE DIA {$h+i%24}
@@ -123,12 +126,11 @@ sub consultar{
 
 						##########################################################
 						# poniendo valores de durcion decendentes (duracion - i )
-						#  qeu hay entre el hago que cuqndo sea 1 termine el loop
-
-
+						# que hay entre el hago que cuqndo sea 1 termine el loop
 
 
 						# Evaluar duracion:
+
 						if($duracion > 1){
 							say "Duracion mayor q 1... ";
 							say "(deberia reservar las proximas $duracion hs)";
