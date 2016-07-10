@@ -81,24 +81,27 @@ sub consultar{
 				$reservasMatrix{$m}{$d}{$h} = $l;
 			}
 
-			# Buscar lugar libre en la matriz...
-			# ??? Encapsular buscarEnMatrix()
+			# IMPORTANTISIMO - CLAVE - CRUSIAL
+			# VER COMO CONSEGUIR PROXIMO ITEM EN LA MATRIX
+			# como comparar duraciones ...
 
-			# (matriz, pedido) para poder hacer recursivo
-			# en duraciones mayores a 1
+			# ??? Encapsular en algo como ComputarPedidoEnMatrix(matriz, pedido)
+			# Buscar lugar libre en la matriz y 2 opciones: agregar en a matrix
+			# ahi adentro o cambiarle el estado a OK y luego pasarlo por otra
+			# funcion que lo a agrege.
 
 			if($mes ~~ %reservasMatrix){
-				say "| Mes: $mes ocupado, voy a buscar en los dias...";
+				say "| Mes: $mes solicitado, voy a buscar en los dias...";
 
 				if($dia ~~ %{$reservasMatrix{$mes}}){
-					say "|| Dia: $dia ocupado, voy q buscar en las horas...";
+					say "|| Dia: $dia solicitado, voy q buscar en las horas...";
 
 					if($hora ~~ %{$reservasMatrix{$mes}{$dia}}){
-						say "||| Hora: $hora ocupada, hay q buscar otra fecha disponible...";
+						say "||| Hora: $hora solicitada, hay q elejir otra fecha disponible...";
 
 						# LISTO hasta aca tengo QUE:
 						# * Mostrar algo como el proximo dia mes hora disponible
-						#   AKA Cuando vuelve el item
+						# AKA Cuando vuelve el item
 						# ??? continuar ???
 
 					}else{
@@ -139,18 +142,18 @@ sub consultar{
 							say "(deberia reservar las proximas $duracion hs)";
 							say "por ahora no reservo nada y continuo."; next;
 
-
-							# Para Reservar duraciones > 1 se me ocurren
+							# Para reservar (duraciones > 1) se me ocurren
 							# 2 opciones:
 
 							# Me llevo este condicional mas arriba asi
-							# me fijo antes si la duracion no pisa nada
-							# antes de procesar entonces para cuando llea aca
-							# ya se que  esta tdo bien y puedo reservar piolamente.
+							# me fijo antes si la duracion no pisa nada.
+
+							# antes de procesar entonces para cuando llega aca
+							# ya se que esta todo bien y puedo reservar piolamente.
 							# de reservarlo.
 
 						}else{
-							# Antes de agregar tengo QUE:
+
 							reservarPedido($registros{$item}{reservas}, $pedidoItem);
 							say "continuo."; next;
 						}
@@ -159,9 +162,8 @@ sub consultar{
 				}else{
 					say "|| Dia: $dia libre!";
 
-					# Habria que estar seguros que la duracion no pisa otra
-					# reserva del proximo dia...
-
+					# Antes de agregar TENGO QUE considerar duracion
+					# (si no piso reservas del proximo dia...)
 					reservarPedido($registros{$item}{reservas}, $pedidoItem);
 					say "continuo."; next;
 					next;
@@ -170,9 +172,8 @@ sub consultar{
 			}else{
 				say "| Mes: $mes libre!";
 
-				# Habria que estar seguros que la duracion no pisa otra
-				# reserva del proximo dia..
-
+				# Antes de agregar TENGO QUE considerar duracion
+				# (si no piso reservas del proximo mes...)
 				reservarPedido($registros{$item}{reservas}, $pedidoItem);
 				say "continuo."; next;
 				next;
@@ -197,7 +198,7 @@ sub reservarPedido {
 	push $_[0], $p;
 
 	# cuando los pedidos lleguen con la duracion chequeada vamos a
-	# poder hacer algo como esto:
+	# poder hacer algo como esto:  REVISAR RECURSION
 	# for ($i = 0, $i < $p{duracion}, $i++){
 	# 	my $pedidoHijo = {
 	# 		# item =>$item,
