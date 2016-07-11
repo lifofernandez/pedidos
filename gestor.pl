@@ -76,33 +76,33 @@ sub consultar{
 	# header($item);
 
 	# if( $item ~~ @inventario ){ # en inventario?
-	# 	# say "Ingresando pedido: $item $mes $dia $hora $duracion";
+	#   # say "Ingresando pedido: $item $mes $dia $hora $duracion";
 
-	# 	if($registros{$item}){
-	# 		my @reservasItem = @{$registros{$item}{reservas}}; #  copy or ref ?
+	#   if($registros{$item}){
+	#       my @reservasItem = @{$registros{$item}{reservas}}; #  copy or ref ?
 
-	# 		my $nReservasItem = scalar @reservasItem;
+	#       my $nReservasItem = scalar @reservasItem;
 
-	# 		# say "| Existen $nReservasItem reservas registrdas para: $item";
+	#       # say "| Existen $nReservasItem reservas registrdas para: $item";
 
-	# 		# MAtriz de reservas que tiene hasta el momento el item
-	# 		# Es mejor guardar e esta manera la info en registro para no repetir
-	# 		# YA VA DECANTAR CUANDO GRABE ESTOS REGISTROS
+	#       # MAtriz de reservas que tiene hasta el momento el item
+	#       # Es mejor guardar e esta manera la info en registro para no repetir
+	#       # YA VA DECANTAR CUANDO GRABE ESTOS REGISTROS
 
-	# 		my %matrizHoraria = (); # {$mese}{$dia}$hora} = $duracion
-	# 		for (@reservasItem){
-	# 			my $l = $_->{duracion};
-	# 			my $h = $_->{hora};
-	# 			my $d = $_->{dia};
-	# 			my $m = $_->{mes};
-	# 			$matrizHoraria{$m}{$d}{$h} = $l;
-	# 		}
+	#       my %matrizHoraria = (); # {$mese}{$dia}$hora} = $duracion
+	#       for (@reservasItem){
+	#           my $l = $_->{duracion};
+	#           my $h = $_->{hora};
+	#           my $d = $_->{dia};
+	#           my $m = $_->{mes};
+	#           $matrizHoraria{$m}{$d}{$h} = $l;
+	#       }
 
-	# 	}else{
-	# 		# say "| No se encontraron reservas para: $item";
-	# 		# $registros{$item} = { "reservas" => [$pedidoItem] };
-	# 		# say "Creo primer registro para este item,\ncontinuo."; next;
-	# 	}
+	#   }else{
+	#       # say "| No se encontraron reservas para: $item";
+	#       # $registros{$item} = { "reservas" => [$pedidoItem] };
+	#       # say "Creo primer registro para este item,\ncontinuo."; next;
+	#   }
 
 	# }
 
@@ -120,9 +120,9 @@ sub comprobrar_pedido {
 
 	# Deberia returnear pedido ya normalizado
 	# my $pedidoNormalizado = {
-	# 	item => $item,
-	# 	duracion => $duracion
-	# 	%matriz_horaria,
+	#   item => $item,
+	#   duracion => $duracion
+	#   %matriz_horaria,
 	# };
 
 
@@ -144,18 +144,18 @@ sub comprobrar_pedido {
 		$item_existe = 1;
 
 		if($duracion > $limite_duracion){
-			$por_que = "La duracion [$duracion] sobrepasa el limite: $limite_duracion";
+			$por_que = "La duracion [$duracion] > $limite_duracion";
 		
 		}else {
 			$duracion_correcta = 1;
 
-			
-
 			my ($resultado, $mensaje) = fecha_correcta($mes,$dia,$hora);
 			$fecha_correcta = $resultado; 
 			
-			if($fecha_correcta) {
-
+			if(!$fecha_correcta) {
+				$por_que = $mensaje;
+				
+			}else{
 				my $date_retira = DateTime->new(
 					year      => $anio, # Defaults Globales
 					month     => $mes,
@@ -183,15 +183,12 @@ sub comprobrar_pedido {
 					$date_retira->add(hours => 1); # siguiente 1 dia
 					$c++;
 				}
-
-				# print Dumper(sort %matriz_horaria);
+				# print Dumper(%matriz_horaria);
+				disponiblidad_pedido(%matriz_horaria);
 
 				# Ahora comprobar disponibilidad del item
 
-
-			}else{
-				$por_que = $mensaje;
-
+				
 			}
 			
 		}
@@ -249,12 +246,39 @@ sub fecha_correcta {
 
 }
 
-sub lugar_en_matriz{
-	# my matriz_registro = $_[0];
-	# my matriz_registro = $_[1];
+sub disponiblidad_pedido{
+	my %matriz_pedido = @_;
+	# my %matriz_registros = $_[0];
 
+	# print Dumper(%matriz_pedido);
+	foreach my $anio (sort keys %matriz_pedido ) {
+		say "año: $anio";
+
+		my %anio = %{$matriz_pedido{$anio}};
+		foreach my $mes ( sort keys %anio ) {
+			say "-mes: $mes";
+
+			my %mes = %{$anio{$mes}};
+			foreach my $dia ( sort keys %mes ){
+				say "--dia: $dia";
+
+				my %dia = %{$mes{$dia}};
+				foreach my $hora ( sort keys %dia ){
+					my $duracion = $dia{$hora};
+					say "---hora: $hora = $duracion";
+
+					# comparar con registros:
+					# $matriz_registros{$año}{$mes}{$dia}{$hora};
+				}
+			}
+
+		}
+
+			   
+		
+	
+	}
 }
-
 
 
 
@@ -268,13 +292,13 @@ sub reservarPedido {
 	# # poder hacer algo como esto: REVISAR RECURCION
 
 	# # for ($i = 0, $i < $p{duracion}, $i++){
-	# # 	my $pedido = {
-	# # 		# item =>$item,
-	# # 		mes => $mes,
-	# # 		dia => $dia,
-	# # 		hora => $hora,
-	# # 		duracion => $duracion,
-	# # 	};
+	# #     my $pedido = {
+	# #         # item =>$item,
+	# #         mes => $mes,
+	# #         dia => $dia,
+	# #         hora => $hora,
+	# #         duracion => $duracion,
+	# #     };
 	# # reservarPedido($registros{$item}{reservas}, $pedido);
 	# # }
 
@@ -293,8 +317,8 @@ sub informePedidos {
 	header('Informe de Pedidos');
 
 	# foreach my $key ( sort keys %registros ){
-	# 	my $cuantasReservas = scalar @{$registros{$key}{reservas}};
-	# 	say "Item: $key -> $cuantasReservas reservas";
+	#   my $cuantasReservas = scalar @{$registros{$key}{reservas}};
+	#   say "Item: $key -> $cuantasReservas reservas";
 	# }
 
 }
