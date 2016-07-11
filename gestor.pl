@@ -134,10 +134,13 @@ sub comprobrar_pedido {
 
 	my $fecha_correcta; # si la fecha esta bien formada
 
-	my $reservas_libres; # si el item esta en el rago de fechas solicitado
+	my $sin_registros; 
+
+
+	my $item_disponible; # si el item esta en el rago de fechas solicitado
 
 	
-	if(!$registros{$item}){ 
+	if(!$item ~~ @inventario){ 
 		$por_que = "No existe [$item] en el inventario";
 
 	}else {
@@ -156,6 +159,7 @@ sub comprobrar_pedido {
 				$por_que = $mensaje;
 				
 			}else{
+
 				my $date_retira = DateTime->new(
 					year      => $anio, # Defaults Globales
 					month     => $mes,
@@ -163,13 +167,13 @@ sub comprobrar_pedido {
 					hour      => $hora,
 				);
 
-				
+					
 				my $date_devulve = $date_retira->clone->add( hours => $duracion );
 				
 				# Recoreremos todas las horas del pedido
 
 
-				my %matriz_horaria;
+				my %matriz_pedido;
 				my $c = 0;
 				while ($date_retira <= $date_devulve) { # mientras que el comienzo no sea mas grande...
 					my $y = $date_retira->year;
@@ -177,17 +181,24 @@ sub comprobrar_pedido {
 					my $d = $date_retira->day;
 					my $h = $date_retira->hour;
 					
-					$matriz_horaria{$y}{$m}{$d}{$h} = $duracion - $c;
+					$matriz_pedido{$y}{$m}{$d}{$h} = $duracion - $c;
 
 
 					$date_retira->add(hours => 1); # siguiente 1 dia
 					$c++;
 				}
-				# print Dumper(%matriz_horaria);
-				disponiblidad_pedido(%matriz_horaria);
 
-				# Ahora comprobar disponibilidad del item
+				if($registros{$item}){
+					say 'HAY hay registros';	
+						
+					# print Dumper(%matriz_horaria);
+					disponiblidad_pedido(%matriz_pedido);
 
+					# Ahora comprobar disponibilidad del item
+				}else{
+					$sin_registros = 1;
+					say 'NO hay registros, podemos reservar';
+				}	
 				
 			}
 			
@@ -195,7 +206,11 @@ sub comprobrar_pedido {
 	}
 
 	
-	if ($item_existe && $duracion_correcta && $fecha_correcta){
+	if ($item_existe 
+		&& $duracion_correcta 
+		&& $fecha_correcta 
+		&& ($sin_registros || $item_disponible)
+		){
 		return 1, "Pedido [$item,$mes,$dia,$hora,$duracion] APROBADO";
 	}else{
 		return 0, "Pedido [$item,$mes,$dia,$hora,$duracion] NO puede ser prosesado: $por_que";
@@ -250,7 +265,6 @@ sub disponiblidad_pedido{
 	my %matriz_pedido = @_;
 	# my %matriz_registros = $_[0];
 
-	# print Dumper(%matriz_pedido);
 	foreach my $anio (sort keys %matriz_pedido ) {
 		say "año: $anio";
 
@@ -268,7 +282,7 @@ sub disponiblidad_pedido{
 					say "---hora: $hora = $duracion";
 
 					# comparar con registros:
-					# $matriz_registros{$año}{$mes}{$dia}{$hora};
+					# $matriz_registros{$anio}{$mes}{$dia}{$hora}; # q esto sea undef
 				}
 			}
 
