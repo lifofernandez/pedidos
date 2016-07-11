@@ -170,19 +170,24 @@ sub comprobrar_pedido {
 
 
 				my %matriz_horaria;
-				
+				my $c = 0;
 				while ($date_retira <= $date_devulve) { # mientras que el comienzo no sea mas grande...
 					my $y = $date_retira->year;
 					my $m = $date_retira->month;
 					my $d = $date_retira->day;
 					my $h = $date_retira->hour;
-					$matriz_horaria{$y}{$m}{$d}{$h} = $duracion--;
+					
+					$matriz_horaria{$y}{$m}{$d}{$h} = $duracion - $c;
 
 
 					$date_retira->add(hours => 1); # siguiente 1 dia
+					$c++;
 				}
+
 				# print Dumper(sort %matriz_horaria);
+
 				# Ahora comprobar disponibilidad del item
+
 
 			}else{
 				$por_que = $mensaje;
@@ -194,9 +199,9 @@ sub comprobrar_pedido {
 
 	
 	if ($item_existe && $duracion_correcta && $fecha_correcta){
-		return 1, "Pedido aporbado";
+		return 1, "Pedido [$item,$mes,$dia,$hora,$duracion] APROBADO";
 	}else{
-		return 0, "El pedido [$item,$mes,$dia,$hora,$duracion] NO puede ser prosesado: $por_que";
+		return 0, "Pedido [$item,$mes,$dia,$hora,$duracion] NO puede ser prosesado: $por_que";
 	}
 
 	
@@ -213,26 +218,42 @@ sub fecha_correcta {
 	my $dia_correcto;
 	my $hora_correcta;
 
+	my $por_que;
+
+
 	if (($mes > 0) && ($mes < 13) ){
 		$mes_correcto = 1;
-	}
-	if (($dia > 0) && ($dia < 32) ){
+		if (($dia > 0) && ($dia < 32) ){
 		# TO DO 'dias en el mes' dinamico :)
-		$dia_correcto = 1;
-	}
-	if ($hora < 24){
-		$hora_correcta = 1;
+			$dia_correcto = 1;
+			if ($hora < 24){
+				$hora_correcta = 1;
+			}else{ 
+				$por_que = "problema con la HORA: $hora" 
+			}
+		}else{ 
+			$por_que = "problema con el DIA: $dia" 
+		}
+	}else{
+		$por_que = "problema con el mes: $mes"
 	}
 
-	if ($mes_correcto && $dia_correcto && $dia_correcto){
+	
+	
+
+	if ($mes_correcto && $dia_correcto && $hora_correcta){
 		return 1;
 	}else{
-		return 0, "Hay un problema en la dia/mes:hora [$mes/$dia:$hora]";
+		return 0, "Hay un $por_que";
 	}
 
 }
 
+sub lugar_en_matriz{
+	# my matriz_registro = $_[0];
+	# my matriz_registro = $_[1];
 
+}
 
 
 
