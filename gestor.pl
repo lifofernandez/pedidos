@@ -1,7 +1,11 @@
 use strict;
 use warnings;
 use feature 'say';
+use v5.20;
+
 use Data::Dumper;
+use DateTime;
+
 
 # use DateTime;
 
@@ -16,6 +20,12 @@ my $registro_text = do {
    <$json_fh>
 };
 
+# Defaults Globales
+my ($sec,$min,$hour,$day,$month,$yr19,@rest) = localtime(time);
+my $anio = $yr19+1900; #año actual, (salvo q se especifique?)
+
+
+
 # Inventario (items disponibles) ###
 my @inventario =  split /\W/, read_file('inventario');
 
@@ -29,7 +39,7 @@ my $registroJson = $json->decode($registro_text); # Cambiar nombre Registro
 my %registros = %$registroJson;
 
 
-informeReservas();
+# informeReservas();
 
 foreach (@pedidos){
 	# chomp;
@@ -39,14 +49,21 @@ foreach (@pedidos){
 	consultar($_);
 }
 
-informeReservas();
+
+# informeReservas();
 
 # Subs
 sub consultar{
-	my ($item,$mes,$dia,$hora,$duracion) =  split /\W/, $_;
+
+
+	my ($resultado, $mensaje) = comprobrar_pedido($_);
+
+	say $mensaje;
+	
+	my ( $item, $mes, $dia, $hora, $duracion ) =  split /\W/, $_;
 
 	my $pedidoItem = {
-		# item =>		$item,
+		item => $item,
 		mes => $mes,
 		dia => $dia,
 		hora => $hora,
@@ -54,40 +71,40 @@ sub consultar{
 	};
 
 
-	header($item);
-
-	if($item ~~ @inventario){ # en inventario?
-		say "Ingresando pedido: $item $mes $dia $hora $duracion";
-
-		if($registros{$item}){
-			my @reservasItem = @{$registros{$item}{reservas}}; # copy
-			my $nReservasItem = scalar @reservasItem;
-			say "| Existen $nReservasItem reservas registrdas para: $item";
-
-			# MAtriz de reservas que tiene hasta el momento el item
-			# Es mejor guardar e esta manera la info en registro para no repetir
-			# YA VA DECANTAR CUANDO GRABE ESTOS REGISTROS
-
-			my %matrizHoraria = (); # {$mese}{$dia}$hora} = $duracion
-			for (@matrizHoraria){
-				my $l = $_->{duracion};
-				my $h = $_->{hora};
-				my $d = $_->{dia};
-				my $m = $_->{mes};
-				$matrizHoraria{$m}{$d}{$h} = $l;
-			}
 
 
+	# header($item);
 
-		}else{
-			say "| No se encontraron reservas para: $item";
-			$registros{$item} = {"reservas" => [$pedidoItem]};
-			say "Creo primer registro para este item,\ncontinuo."; next;
-		}
+	# if( $item ~~ @inventario ){ # en inventario?
+	# 	# say "Ingresando pedido: $item $mes $dia $hora $duracion";
 
-	}else{
-		say "\nNo existe: $item en el inventario ###";
-	}
+	# 	if($registros{$item}){
+	# 		my @reservasItem = @{$registros{$item}{reservas}}; #  copy or ref ?
+
+	# 		my $nReservasItem = scalar @reservasItem;
+
+	# 		# say "| Existen $nReservasItem reservas registrdas para: $item";
+
+	# 		# MAtriz de reservas que tiene hasta el momento el item
+	# 		# Es mejor guardar e esta manera la info en registro para no repetir
+	# 		# YA VA DECANTAR CUANDO GRABE ESTOS REGISTROS
+
+	# 		my %matrizHoraria = (); # {$mese}{$dia}$hora} = $duracion
+	# 		for (@reservasItem){
+	# 			my $l = $_->{duracion};
+	# 			my $h = $_->{hora};
+	# 			my $d = $_->{dia};
+	# 			my $m = $_->{mes};
+	# 			$matrizHoraria{$m}{$d}{$h} = $l;
+	# 		}
+
+	# 	}else{
+	# 		# say "| No se encontraron reservas para: $item";
+	# 		# $registros{$item} = { "reservas" => [$pedidoItem] };
+	# 		# say "Creo primer registro para este item,\ncontinuo."; next;
+	# 	}
+
+	# }
 
 }
 
@@ -95,36 +112,163 @@ sub consultar{
 
 
 # Subrutinas
-sub reservarPedido {
+sub comprobrar_pedido {
 
-	my $p = $_[-1];
-	push $_[0], $p;
+	my $limite_duracion = 24;
 
-	# Y si calculo la duracion aca?
+	my ( $item, $mes, $dia, $hora, $duracion ) =  split /\W/, $_;
 
-	# cuando los pedidos lleguen con la duracion chequeada vamos a
-	# poder hacer algo como esto: REVISAR RECURCION
-
-	# for ($i = 0, $i < $p{duracion}, $i++){
-	# 	my $pedidoHijo = {
-	# 		# item =>$item,
-	# 		mes => $mes,
-	# 		dia => $dia,
-	# 		hora => $hora,
-	# 		duracion => $duracion-$i,
-	# 	};
-	# reservarPedido($registros{$item}{reservas}, $pedidoHijo);
-	# }
+	# Deberia returnear pedido ya normalizado
+	# my $pedidoNormalizado = {
+	# 	item => $item,
+	# 	duracion => $duracion
+	# 	%matriz_horaria,
+	# };
 
 
-	# mostrar esto en la matriz para ver que estebien
-	print "+ Agregue la reserva: ";
-	print_hash($_[0][-1]);
+	my $por_que = "";
+
+
+	my $item_existe;
+	my $duracion_correcta;
+
+	my $fecha_correcta; # si la fecha esta bien formada
+
+	my $reservas_libres; # si el item esta en el rago de fechas solicitado
+
+	
+	if(!$registros{$item}){ 
+		$por_que = "No existe [$item] en el inventario";
+
+	}else {
+		$item_existe = 1;
+
+		if($duracion > $limite_duracion){
+			$por_que = "La duracion [$duracion] sobrepasa el limite: $limite_duracion";
+		
+		}else {
+			$duracion_correcta = 1;
+
+			
+
+			my ($resultado, $mensaje) = fecha_correcta($mes,$dia,$hora);
+			$fecha_correcta = $resultado; 
+			
+			if($fecha_correcta) {
+
+				my $date_retira = DateTime->new(
+					year      => $anio, # Defaults Globales
+					month     => $mes,
+					day       => $dia,
+					hour      => $hora,
+				);
+
+				
+				my $date_devulve = $date_retira->clone->add( hours => $duracion );
+				
+				# Recoreremos todas las horas del pedido
+
+
+				my %matriz_horaria;
+				
+				while ($date_retira <= $date_devulve) { # mientras que el comienzo no sea mas grande...
+					my $y = $date_retira->year;
+					my $m = $date_retira->month;
+					my $d = $date_retira->day;
+					my $h = $date_retira->hour;
+					$matriz_horaria{$y}{$m}{$d}{$h} = $duracion--;
+
+
+					$date_retira->add(hours => 1); # siguiente 1 dia
+				}
+				# print Dumper(sort %matriz_horaria);
+				# Ahora comprobar disponibilidad del item
+
+			}else{
+				$por_que = $mensaje;
+
+			}
+			
+		}
+	}
+
+	
+	if ($item_existe && $duracion_correcta && $fecha_correcta){
+		return 1, "Pedido aporbado";
+	}else{
+		return 0, "El pedido [$item,$mes,$dia,$hora,$duracion] NO puede ser prosesado: $por_que";
+	}
+
+	
+	
 
 }
 
-# Informe de pedidos entrantes
-sub informePedido {
+
+sub fecha_correcta {
+
+	my ($mes, $dia, $hora ) =  @_;
+
+	my $mes_correcto;
+	my $dia_correcto;
+	my $hora_correcta;
+
+	if (($mes > 0) && ($mes < 13) ){
+		$mes_correcto = 1;
+	}
+	if (($dia > 0) && ($dia < 32) ){
+		# TO DO 'dias en el mes' dinamico :)
+		$dia_correcto = 1;
+	}
+	if ($hora < 24){
+		$hora_correcta = 1;
+	}
+
+	if ($mes_correcto && $dia_correcto && $dia_correcto){
+		return 1;
+	}else{
+		return 0, "Hay un problema en la dia/mes:hora [$mes/$dia:$hora]";
+	}
+
+}
+
+
+
+
+
+
+sub reservarPedido {
+
+	# my $p = $_[-1];
+	# push $_[0], $p;
+
+
+	# # cuando los pedidos lleguen con la duracion chequeada vamos a
+	# # poder hacer algo como esto: REVISAR RECURCION
+
+	# # for ($i = 0, $i < $p{duracion}, $i++){
+	# # 	my $pedido = {
+	# # 		# item =>$item,
+	# # 		mes => $mes,
+	# # 		dia => $dia,
+	# # 		hora => $hora,
+	# # 		duracion => $duracion,
+	# # 	};
+	# # reservarPedido($registros{$item}{reservas}, $pedido);
+	# # }
+
+
+	# # mostrar esto en la matriz para ver que estebien
+	# print "+ Agregue la reserva: ";
+	# print_hash($_[0][-1]);
+
+}
+
+
+
+# Informes
+
+sub informePedidos {
 	header('Informe de Pedidos');
 
 	# foreach my $key ( sort keys %registros ){
@@ -144,13 +288,14 @@ sub informeReservas {
 
 }
 
-sub print_hash {
+# Utiles
+
+sub print_hash{
 	my $href = shift;
 	print "$_:$href->{$_} " for keys %{$href};
-	print "\n";
 }
 
-sub header {
+sub header{
 	print "\n";
 	my $s = shift;
 	my $l = length $s;
@@ -161,3 +306,9 @@ sub header {
 	print "#"x$dif;
 	print "\n";
 }
+
+
+# my ($sec,$min,$hour,$day,$month,$yr19,@rest) = localtime(time);
+# ####### To get the localtime of your system
+# printf qq{Date:\t%02d-%02d-%02d\n}, $day, $month, $yr19+1900;
+# printf qq{Time:\t%02d:%02d:%02d\n}, $hour, $min, $sec;
