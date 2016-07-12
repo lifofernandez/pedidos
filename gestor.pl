@@ -12,19 +12,16 @@ use DateTime;
 use File::Slurp;
 
 use JSON qw( );
-my $filename = 'registro.json';
-my $registro_text = do {
-   open(my $json_fh, "<:encoding(UTF-8)", $filename)
-	  or die("Can't open \$filename\": $!\n");
-   local $/;
-   <$json_fh>
-};
+
 
 # Defaults Globales
 my ($sec,$min,$hour,$day,$month,$yr19,@rest) = localtime(time);
 my $anio = $yr19+1900; #año actual, (salvo q se especifique?)
 
-
+my $verbose = 0;
+if('v' ~~ @ARGV){
+	$verbose = 1;
+}
 
 # Inventario (items disponibles) ###
 my @inventario =  split /\W/, read_file('inventario');
@@ -33,6 +30,7 @@ my @inventario =  split /\W/, read_file('inventario');
 my @pedidos = read_file('pedidos.csv');
 
 # Registro (almacen de reservas) ###
+my $registro_text = read_file('registro.json');
 my $json = JSON->new;
 my $registroJson = $json->decode($registro_text); # Cambiar nombre Registro
 
@@ -274,28 +272,25 @@ sub disponiblidad_pedido {
 
 
 	foreach my $anio (sort keys $pedido) {
-		# say "anio:$anio";
+		say "anio:$anio" if $verbose;
 
-		# print Dumper($pedido->{$anio});
 		foreach my $mes ( sort keys $pedido->{$anio} ) {
-			# print "-mes: $mes\n";
-			foreach my $dia ( sort keys $pedido->{$anio}{$mes} ) {
-				# print "--dia:$dia horas:";
+			say "-mes: $mes" if $verbose;
 
+			foreach my $dia ( sort keys $pedido->{$anio}{$mes} ) {
+				say "--dia:$dia" if $verbose;
+
+				print "---horas:" if $verbose;
 				foreach my $hora ( sort { $a <=> $b } keys $pedido->{$anio}{$mes}{$dia} ){
-					my $duracion = $pedido->{$anio}{$dia}{$hora};
-					# print " $hora";
+					my $duracion = $pedido->{$anio}{$mes}{$dia}{$hora};
+					print " $hora-$duracion" if $verbose;
 
 					# comparar con registros:
 					# print $matriz_registros{$anio}{$mes}{$dia}{$hora}; # q esto sea undef
 				}
-				# print "\n";
+				print "\n" if $verbose;
 			}
 		}
-
-
-
-
 	}
 }
 
