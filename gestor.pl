@@ -189,11 +189,14 @@ sub comprobrar_pedido {
 					# print Dumper(%matriz_horaria);
 
 					# Ahora comprobar disponibilidad del item
-					my $disponiblidad = disponiblidad_pedido(
+					my ($disponble,$mensaje)= disponiblidad_pedido(
 						\%matriz_pedido,
 						$registros{$item}{reservas}
 						);
-					$por_que = $disponiblidad;
+					$item_disponible = $disponble;
+					$por_que = $mensaje;
+					$congrats = $mensaje;
+
 
 				}else{
 					$sin_registros = 1;
@@ -280,21 +283,29 @@ sub disponiblidad_pedido {
 				say "--dia:$dia" if $verbose;
 
 				say "---horas:" if $verbose;
+
+				my $libre = 0; # CABEZEADA POR MEJORAR
 				foreach my $hora ( sort { $a <=> $b } keys $pedido->{$anio}{$mes}{$dia} ) {
 					my $duracion = $pedido->{$anio}{$mes}{$dia}{$hora};
 					print "$hora:" if $verbose;
 
 					# comparar con registros:
+					$libre = 0; # CABEZEADA POR MEJORAR
 					if($registro_reservas->{$anio}{$mes}{$dia}{$hora}){
 						my $vuelve = $registro_reservas->{$anio}{$mes}{$dia}{$hora};
 						print "ocupado " if $verbose;
-						return "el $dia/$mes a las $hora ocupado x $vuelve hs";
+						return 0,"el $dia/$mes a las $hora ocupado x $vuelve hs";
 					}else{
 						print "libre " if $verbose;
+						$libre = 1; # CABEZEADA POR MEJORAR
 					}
 
 				}
 				print "\n" if $verbose;
+
+				if($libre) {
+					return 1,"todas las horas LIBRES";
+				}
 			}
 		}
 	}
