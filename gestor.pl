@@ -189,7 +189,7 @@ sub comprobrar_pedido {
 
 					# Ahora comprobar disponibilidad del item
 					my $p ='efkofeok';
-					disponiblidad_pedido(\%matriz_pedido,$p);
+					disponiblidad_pedido(\%matriz_pedido,$registros{$item}{reservas});
 
 
 				}else{
@@ -261,7 +261,7 @@ sub fecha_correcta {
 sub disponiblidad_pedido {
 	my $pedido = $_[0];
 	my $registro_reservas = $_[1];
-	# print Dumper($p);
+	# print Dumper($registro_reservas);
 
 	# my $pedidoJson = $json->encode($pedido); # Cambiar nombre Registro
 	# print Dumper($pedidoJson);
@@ -276,13 +276,18 @@ sub disponiblidad_pedido {
 			foreach my $dia ( sort keys $pedido->{$anio}{$mes} ) {
 				say "--dia:$dia" if $verbose;
 
-				print "---horas:" if $verbose;
+				say "---horas:" if $verbose;
 				foreach my $hora ( sort { $a <=> $b } keys $pedido->{$anio}{$mes}{$dia} ){
 					my $duracion = $pedido->{$anio}{$mes}{$dia}{$hora};
-					print " $hora-$duracion" if $verbose;
+					print "$hora:" if $verbose;
 
 					# comparar con registros:
-					# print $matriz_registros{$anio}{$mes}{$dia}{$hora}; # q esto sea undef
+					if($registro_reservas->{$anio}{$mes}{$dia}{$hora}){
+						print "ocupado " if $verbose;
+					}else{
+						print "libre " if $verbose;
+					}
+
 				}
 				print "\n" if $verbose;
 			}
