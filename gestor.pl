@@ -192,8 +192,11 @@ sub comprobrar_pedido {
 					$por_que = "Hay q buscar disponiblidad";
 
 					# print Dumper(%matriz_horaria);
-					disponiblidad_pedido(%matriz_pedido);
+
 					# Ahora comprobar disponibilidad del item
+					my $p ='efkofeok';
+					disponiblidad_pedido(\%matriz_pedido,$p);
+
 
 				}else{
 					$sin_registros = 1;
@@ -236,7 +239,7 @@ sub fecha_correcta {
 	if (($mes > 0) && ($mes < 13) ){
 		$mes_correcto = 1;
 		if (($dia > 0) && ($dia < 32) ){
-		# TO DO 'dias en el mes' dinamico :)
+			# TO DO 'dias en el mes' dinamico :)
 			$dia_correcto = 1;
 			if ($hora < 24){
 				$hora_correcta = 1;
@@ -261,31 +264,35 @@ sub fecha_correcta {
 
 }
 
-sub disponiblidad_pedido{
-	my %matriz_pedido = @_;
+sub disponiblidad_pedido {
+	# my %matriz_pedido = shift;
+	my $pedido = $_[0];
+	my $p = $_[1];
+	print Dumper($p);
 	# my %matriz_registros = $_[0];
 
-	foreach my $anio (sort keys %matriz_pedido ) {
-		# say "año: $anio";
+	# my $pedidoJson = $json->encode(\%matriz_pedido); # Cambiar nombre Registro
+	# print Dumper($pedidoJson);
 
-		my %anio = %{$matriz_pedido{$anio}};
-		foreach my $mes ( sort keys %anio ) {
-			# say "-mes: $mes";
 
-			my %mes = %{$anio{$mes}};
-			foreach my $dia ( sort keys %mes ){
-				# say "--dia: $dia";
+	foreach my $anio (sort keys %{$pedido} ) {
+		say "anio: $anio";
 
-				my %dia = %{$mes{$dia}};
-				foreach my $hora ( sort keys %dia ){
-					my $duracion = $dia{$hora};
-					# say "---hora: $hora = $duracion";
+		# print Dumper($pedido->{$anio});
+		foreach my $mes ( sort keys $pedido->{$anio} ) {
+			say "-mes: $mes";
+			foreach my $dia ( sort keys $pedido->{$anio}{$mes} ) {
+				say "--dia: $dia";
+
+				foreach my $hora ( sort keys $pedido->{$anio}{$mes}{$dia} ){
+					my $duracion = $pedido->{$anio}{$dia}{$hora};
+					say "---hora: $hora ";
 
 					# comparar con registros:
-					# $matriz_registros{$anio}{$mes}{$dia}{$hora}; # q esto sea undef
+					# print $matriz_registros{$anio}{$mes}{$dia}{$hora}; # q esto sea undef
 				}
-			}
 
+			}
 		}
 
 
