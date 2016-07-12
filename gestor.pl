@@ -53,9 +53,9 @@ foreach (@pedidos){
 # Subs
 sub consultar{
 	my ($resultado, $mensaje) = comprobrar_pedido($_);
-	say $mensaje;
+	print "\n" if $verbose;
 
-	
+	say $mensaje;
 
 }
 
@@ -69,7 +69,9 @@ sub comprobrar_pedido {
 
 	my ( $item, $mes, $dia, $hora, $duracion ) =  split /\W/, $_;
 
-	# Deberia returnear pedido ya normalizado
+	# Esta sub creo, deberia returnear pedido ya normalizado
+	# para ingresar a los registros
+
 	# my $pedidoNormalizado = {
 	#   item => $item,
 	#   duracion => $duracion
@@ -124,7 +126,6 @@ sub comprobrar_pedido {
 
 				# Recoreremos todas las horas del pedido
 
-
 				my %matriz_pedido;
 				my $c = 0;
 				while ($date_retira <= $date_devulve) { # mientras que el comienzo no sea mas grande...
@@ -135,7 +136,9 @@ sub comprobrar_pedido {
 
 					$matriz_pedido{$y}{$m}{$d}{$h} = $duracion - $c;
 
-					# para evitar iteraciones podria fijarme en las reservas acá
+					# Para evitar iteraciones podria directamente
+					# fijarme el valor de cada hora acá... en la primera
+					# que da "ocupada" rechazo el pedido.
 
 					$date_retira->add(hours => 1); # siguiente 1 dia
 					$c++;
@@ -145,10 +148,12 @@ sub comprobrar_pedido {
 					$por_que = "hay q buscar disponiblidad";
 
 					# Ahora comprobar disponibilidad del item
+
 					my ($disponble,$mensaje) = disponiblidad_pedido(
 						\%matriz_pedido,
 						$registros{$item}{reservas}
 					);
+
 					$item_disponible = $disponble;
 					$por_que = $mensaje;
 					$congrats = $mensaje;
@@ -156,7 +161,7 @@ sub comprobrar_pedido {
 
 				}else{
 					$sin_registros = 1;
-						$congrats = 'registro LIBRE de reservas';
+					$congrats = 'registro LIBRE de reservas';
 				}
 
 			}
@@ -182,19 +187,17 @@ sub comprobrar_pedido {
 
 
 sub fecha_correcta {
-
 	my ($mes, $dia, $hora ) =  @_;
 
 	my $mes_correcto;
 	my $dia_correcto;
 	my $hora_correcta;
-
 	my $por_que;
 
 
-	if (($mes > 0) && ($mes < 13) ){
+	if (($mes > 0) && ($mes < 13) ) {
 		$mes_correcto = 1;
-		if (($dia > 0) && ($dia < 32) ){
+		if (($dia > 0) && ($dia < 32) ) {
 			# TO DO 'dias en el mes' dinamico :)
 			$dia_correcto = 1;
 			if ($hora < 24){
@@ -210,8 +213,6 @@ sub fecha_correcta {
 	}
 
 
-
-
 	if ($mes_correcto && $dia_correcto && $hora_correcta){
 		return 1;
 	}else{
@@ -223,7 +224,6 @@ sub fecha_correcta {
 sub disponiblidad_pedido {
 	my $pedido = $_[0];
 	my $registro_reservas = $_[1];
-	# print Dumper($registro_reservas);
 
 	# my $pedidoJson = $json->encode($pedido); # Cambiar nombre Registro
 	# print Dumper($pedidoJson);
@@ -243,7 +243,7 @@ sub disponiblidad_pedido {
 				my $libre = 0; # CABEZEADA POR MEJORAR
 				foreach my $hora ( sort { $a <=> $b } 
 					keys %{$pedido->{$anio}{$mes}{$dia}}) {
-					
+
 					my $duracion = $pedido->{$anio}{$mes}{$dia}{$hora};
 					print "$hora:" if $verbose;
 
@@ -265,6 +265,7 @@ sub disponiblidad_pedido {
 					return 1,"todas las horas LIBRES";
 				}
 			}
+
 		}
 	 }
 }
@@ -302,16 +303,6 @@ sub reservarPedido {
 
 # Informes
 
-sub informePedidos {
-	header('Informe de Pedidos');
-
-	# foreach my $key ( sort keys %registros ){
-	#   my $cuantasReservas = scalar @{$registros{$key}{reservas}};
-	#   say "Item: $key -> $cuantasReservas reservas";
-	# }
-	
-}
-
 sub informeReservas {
 	header('Informe de Registros');
 
@@ -319,7 +310,6 @@ sub informeReservas {
 		my $cuantasReservas = scalar @{$registros{$key}{reservas}};
 		say "Item: $key -> $cuantasReservas reservas";
 	}
-
 }
 
 # Utiles
@@ -342,14 +332,17 @@ sub informeReservas {
 # }
 
 
+
+
+
+
+# Basura / Reserva
+
 # my ($sec,$min,$hour,$day,$month,$yr19,@rest) = localtime(time);
 # ####### To get the localtime of your system
 # printf qq{Date:\t%02d-%02d-%02d\n}, $day, $month, $yr19+1900;
 # printf qq{Time:\t%02d:%02d:%02d\n}, $hour, $min, $sec;
 
-
-
-#### basura
 # my ( $item, $mes, $dia, $hora, $duracion ) =  split /\W/, $_;
 	# my $pedidoItem = {
 	# 	item => $item,
