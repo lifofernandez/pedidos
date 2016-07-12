@@ -133,10 +133,11 @@ sub comprobrar_pedido {
 
 	my $item_disponible; # si el item esta en el rago de fechas solicitado
 
+	my %palabras = map { $_ => 1 } @inventario; # CABEZEADA POR REVISAR
 
-	if(!$item ~~ @inventario){
+	if(!exists($palabras{$item})){
 		$por_que = "No existe [$item] en el inventario";
-
+		$item_existe = 0;
 	}else {
 		$item_existe = 1;
 
@@ -183,7 +184,7 @@ sub comprobrar_pedido {
 					$c++;
 				}
 
-				if($registros{$item}){
+				if($item_existe && $registros{$item}){
 					$por_que = "hay q buscar disponiblidad";
 
 					# Ahora comprobar disponibilidad del item
