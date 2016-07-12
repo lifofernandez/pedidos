@@ -56,7 +56,6 @@ sub prosesar{
 	print "\n" if $verbose;
 
 	say $mensaje;
-
 }
 
 
@@ -74,8 +73,7 @@ sub comprobrar_pedido {
 
 	# my $pedidoNormalizado = {
 	#   item => $item,
-	#   duracion => $duracion
-	#   %matriz_horaria,
+	#   reservas => {arboldereservas}
 	# };
 
 
@@ -85,12 +83,11 @@ sub comprobrar_pedido {
 	my $item_existe;
 	my $duracion_correcta;
 
-	my $fecha_correcta; # si la fecha esta bien formada
-
+	my $fecha_correcta; 
 	my $sin_registros;
 
 
-	my $item_disponible; # si el item esta en el rago de fechas solicitado
+	my $item_disponible; 
 
 	my %palabras = map { $_ => 1 } @inventario; # CABEZEADA POR REVISAR
 
@@ -115,12 +112,11 @@ sub comprobrar_pedido {
 			}else{
 
 				my $date_retira = DateTime->new(
-					year      => $anio, # Defaults Globales
+					year      => $anio, # Default Global
 					month     => $mes,
 					day       => $dia,
 					hour      => $hora,
 				);
-
 
 				my $date_devulve = $date_retira->clone->add( hours => $duracion );
 
@@ -128,7 +124,7 @@ sub comprobrar_pedido {
 
 				my %matriz_pedido;
 				my $c = 0;
-				while ($date_retira <= $date_devulve) { # mientras que el comienzo no sea mas grande...
+				while ($date_retira <= $date_devulve) {
 					my $y = $date_retira->year;
 					my $m = $date_retira->month;
 					my $d = $date_retira->day;
@@ -160,8 +156,12 @@ sub comprobrar_pedido {
 
 
 				}else{
+
 					$sin_registros = 1;
 					$congrats = 'registro LIBRE de reservas';
+
+					# Ver como hacer esto aca y des encapsular
+					# push $registros{$item}{reservas}{2016}, $matriz_pedido->{2016};
 				}
 
 			}
@@ -198,8 +198,8 @@ sub fecha_correcta {
 	if (($mes > 0) && ($mes < 13) ) {
 		$mes_correcto = 1;
 		if (($dia > 0) && ($dia < 32) ) {
-			# TO DO 'dias en el mes' dinamico :)
-			$dia_correcto = 1;
+			$dia_correcto = 1; # TO DO: 'dias en el mes' dinamico :)
+
 			if ($hora < 24){
 				$hora_correcta = 1;
 			}else{
@@ -227,7 +227,6 @@ sub disponiblidad_pedido {
 
 	# my $pedidoJson = $json->encode($pedido); # Cambiar nombre Registro
 	# print Dumper($pedidoJson);
-
 
 	foreach my $anio (sort keys %$pedido) {
 	 	say "anio:$anio" if $verbose;
@@ -257,8 +256,9 @@ sub disponiblidad_pedido {
 						print "libre " if $verbose;
 						$libre = 1; # CABEZEADA POR MEJORAR
 					}
-
+					
 				}
+
 				print "\n" if $verbose;
 
 				if($libre) { # CABEZEADA POR MEJORAR
@@ -279,7 +279,6 @@ sub reservarPedido {
 
 
 	# # cuando los pedidos lleguen con la duracion chequeada vamos a
-	# # poder hacer algo como esto: REVISAR RECURCION
 
 	# # for ($i = 0, $i < $p{duracion}, $i++){
 	# #     my $pedido = {
