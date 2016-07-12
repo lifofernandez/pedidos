@@ -52,21 +52,17 @@ foreach (@pedidos){
 
 # Subs
 sub consultar{
-
-
 	my ($resultado, $mensaje) = comprobrar_pedido($_);
-
 	say $mensaje;
 
-	my ( $item, $mes, $dia, $hora, $duracion ) =  split /\W/, $_;
-
-	my $pedidoItem = {
-		item => $item,
-		mes => $mes,
-		dia => $dia,
-		hora => $hora,
-		duracion => $duracion
-	};
+	# my ( $item, $mes, $dia, $hora, $duracion ) =  split /\W/, $_;
+	# my $pedidoItem = {
+	# 	item => $item,
+	# 	mes => $mes,
+	# 	dia => $dia,
+	# 	hora => $hora,
+	# 	duracion => $duracion
+	# };
 
 
 
@@ -187,7 +183,7 @@ sub comprobrar_pedido {
 				}
 
 				if($registros{$item}){
-					$por_que = "Hay q buscar disponiblidad";
+					$por_que = "hay q buscar disponiblidad";
 
 					# print Dumper(%matriz_horaria);
 
@@ -198,7 +194,7 @@ sub comprobrar_pedido {
 
 				}else{
 					$sin_registros = 1;
-						$congrats = 'NO hay reservas previas';
+						$congrats = 'registro LIBRE de reservas';
 				}
 
 			}
