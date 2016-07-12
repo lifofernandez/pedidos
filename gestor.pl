@@ -44,14 +44,14 @@ foreach (@pedidos){
 	if( $_ =~ /^\s*item,mes,/ ){ # borrrar primera linea
 		next;
 	}
-	consultar($_);
+	prosesar($_);
 }
 
 
 # informeReservas();
 
 # Subs
-sub consultar{
+sub prosesar{
 	my ($resultado, $mensaje) = comprobrar_pedido($_);
 	print "\n" if $verbose;
 
@@ -344,43 +344,43 @@ sub informeReservas {
 # printf qq{Time:\t%02d:%02d:%02d\n}, $hour, $min, $sec;
 
 # my ( $item, $mes, $dia, $hora, $duracion ) =  split /\W/, $_;
-	# my $pedidoItem = {
-	# 	item => $item,
-	# 	mes => $mes,
-	# 	dia => $dia,
-	# 	hora => $hora,
-	# 	duracion => $duracion
-	# };
+# my $pedidoItem = {
+# 	item => $item,
+# 	mes => $mes,
+# 	dia => $dia,
+# 	hora => $hora,
+# 	duracion => $duracion
+# };
 
-	# header($item);
+# header($item);
 
-	# if( $item ~~ @inventario ){ # en inventario?
-	#   # say "Ingresando pedido: $item $mes $dia $hora $duracion";
+# if( $item ~~ @inventario ){ # en inventario?
+#   # say "Ingresando pedido: $item $mes $dia $hora $duracion";
 
-	#   if($registros{$item}){
-	#       my @reservasItem = @{$registros{$item}{reservas}}; #  copy or ref ?
+#   if($registros{$item}){
+#       my @reservasItem = @{$registros{$item}{reservas}}; #  copy or ref ?
 
-	#       my $nReservasItem = scalar @reservasItem;
+#       my $nReservasItem = scalar @reservasItem;
 
-	#       # say "| Existen $nReservasItem reservas registrdas para: $item";
+#       # say "| Existen $nReservasItem reservas registrdas para: $item";
 
-	#       # MAtriz de reservas que tiene hasta el momento el item
-	#       # Es mejor guardar e esta manera la info en registro para no repetir
-	#       # YA VA DECANTAR CUANDO GRABE ESTOS REGISTROS
+#       # MAtriz de reservas que tiene hasta el momento el item
+#       # Es mejor guardar e esta manera la info en registro para no repetir
+#       # YA VA DECANTAR CUANDO GRABE ESTOS REGISTROS
 
-	#       my %matrizHoraria = (); # {$mese}{$dia}$hora} = $duracion
-	#       for (@reservasItem){
-	#           my $l = $_->{duracion};
-	#           my $h = $_->{hora};
-	#           my $d = $_->{dia};
-	#           my $m = $_->{mes};
-	#           $matrizHoraria{$m}{$d}{$h} = $l;
-	#       }
+#       my %matrizHoraria = (); # {$mese}{$dia}$hora} = $duracion
+#       for (@reservasItem){
+#           my $l = $_->{duracion};
+#           my $h = $_->{hora};
+#           my $d = $_->{dia};
+#           my $m = $_->{mes};
+#           $matrizHoraria{$m}{$d}{$h} = $l;
+#       }
 
-	#   }else{
-	#       # say "| No se encontraron reservas para: $item";
-	#       # $registros{$item} = { "reservas" => [$pedidoItem] };
-	#       # say "Creo primer registro para este item,\ncontinuo."; next;
-	#   }
+#   }else{
+#       # say "| No se encontraron reservas para: $item";
+#       # $registros{$item} = { "reservas" => [$pedidoItem] };
+#       # say "Creo primer registro para este item,\ncontinuo."; next;
+#   }
 
-	# }
+# }
