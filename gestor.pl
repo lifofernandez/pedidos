@@ -265,33 +265,31 @@ sub fecha_correcta {
 }
 
 sub disponiblidad_pedido {
-	# my %matriz_pedido = shift;
 	my $pedido = $_[0];
-	my $p = $_[1];
-	print Dumper($p);
-	# my %matriz_registros = $_[0];
+	my $registro_reservas = $_[1];
+	# print Dumper($p);
 
-	# my $pedidoJson = $json->encode(\%matriz_pedido); # Cambiar nombre Registro
+	# my $pedidoJson = $json->encode($pedido); # Cambiar nombre Registro
 	# print Dumper($pedidoJson);
 
 
-	foreach my $anio (sort keys %{$pedido} ) {
-		say "anio: $anio";
+	foreach my $anio (sort keys $pedido) {
+		# say "anio:$anio";
 
 		# print Dumper($pedido->{$anio});
 		foreach my $mes ( sort keys $pedido->{$anio} ) {
-			say "-mes: $mes";
+			# print "-mes: $mes\n";
 			foreach my $dia ( sort keys $pedido->{$anio}{$mes} ) {
-				say "--dia: $dia";
+				# print "--dia:$dia horas:";
 
-				foreach my $hora ( sort keys $pedido->{$anio}{$mes}{$dia} ){
+				foreach my $hora ( sort { $a <=> $b } keys $pedido->{$anio}{$mes}{$dia} ){
 					my $duracion = $pedido->{$anio}{$dia}{$hora};
-					say "---hora: $hora ";
+					# print " $hora";
 
 					# comparar con registros:
 					# print $matriz_registros{$anio}{$mes}{$dia}{$hora}; # q esto sea undef
 				}
-
+				# print "\n";
 			}
 		}
 
