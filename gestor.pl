@@ -189,10 +189,10 @@ sub comprobrar_pedido {
 					# print Dumper(%matriz_horaria);
 
 					# Ahora comprobar disponibilidad del item
-					my ($disponble,$mensaje)= disponiblidad_pedido(
+					my ($disponble,$mensaje) = disponiblidad_pedido(
 						\%matriz_pedido,
 						$registros{$item}{reservas}
-						);
+					);
 					$item_disponible = $disponble;
 					$por_que = $mensaje;
 					$congrats = $mensaje;
@@ -214,9 +214,9 @@ sub comprobrar_pedido {
 		&& $fecha_correcta
 		&& ($sin_registros || $item_disponible)
 		){
-		return 1, "Pedido\t$item $mes/$dia:$hora-$duracion\tAPROBADO  ($congrats)";
+		return 1, "$item\t$mes/$dia:$hora-$duracion\tAPROBADO\t($congrats)";
 	}else{
-		return 0, "Pedido\t$item $mes/$dia:$hora-$duracion\tRECHAZADO ($por_que)";
+		return 0, "$item\t$mes/$dia:$hora-$duracion\tRECHAZADO\t($por_que)";
 	}
 
 
