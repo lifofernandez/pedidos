@@ -177,6 +177,7 @@ sub comprobrar_pedido {
 
 					$matriz_pedido{$y}{$m}{$d}{$h} = $duracion - $c;
 
+					# para evitar iteraciones podria fijarme en las reservas acá
 
 					$date_retira->add(hours => 1); # siguiente 1 dia
 					$c++;
@@ -188,9 +189,11 @@ sub comprobrar_pedido {
 					# print Dumper(%matriz_horaria);
 
 					# Ahora comprobar disponibilidad del item
-					my $p ='efkofeok';
-					disponiblidad_pedido(\%matriz_pedido,$registros{$item}{reservas});
-
+					my $disponiblidad = disponiblidad_pedido(
+						\%matriz_pedido,
+						$registros{$item}{reservas}
+						);
+					$por_que = $disponiblidad;
 
 				}else{
 					$sin_registros = 1;
@@ -208,9 +211,9 @@ sub comprobrar_pedido {
 		&& $fecha_correcta
 		&& ($sin_registros || $item_disponible)
 		){
-		return 1, "Pedido\t$item,$mes,$dia,$hora,$duracion\tAPROBADO  ($congrats)";
+		return 1, "Pedido\t$item $mes/$dia:$hora-$duracion\tAPROBADO  ($congrats)";
 	}else{
-		return 0, "Pedido\t$item,$mes,$dia,$hora,$duracion\tRECHAZADO ($por_que)";
+		return 0, "Pedido\t$item $mes/$dia:$hora-$duracion\tRECHAZADO ($por_que)";
 	}
 
 
@@ -277,13 +280,15 @@ sub disponiblidad_pedido {
 				say "--dia:$dia" if $verbose;
 
 				say "---horas:" if $verbose;
-				foreach my $hora ( sort { $a <=> $b } keys $pedido->{$anio}{$mes}{$dia} ){
+				foreach my $hora ( sort { $a <=> $b } keys $pedido->{$anio}{$mes}{$dia} ) {
 					my $duracion = $pedido->{$anio}{$mes}{$dia}{$hora};
 					print "$hora:" if $verbose;
 
 					# comparar con registros:
 					if($registro_reservas->{$anio}{$mes}{$dia}{$hora}){
+						my $vuelve = $registro_reservas->{$anio}{$mes}{$dia}{$hora};
 						print "ocupado " if $verbose;
+						return "el $dia/$mes a las $hora ocupado x $vuelve hs";
 					}else{
 						print "libre " if $verbose;
 					}
