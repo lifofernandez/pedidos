@@ -55,7 +55,7 @@ sub prosesar{
 	my ($resultado, $mensaje) = comprobrar_pedido($_);
 	print "\n" if $verbose;
 
-	say $mensaje;
+	# say $mensaje;
 }
 
 
@@ -108,10 +108,17 @@ sub comprobrar_pedido {
 			}else{
 
 				# Obtener timestam salida y calcular vuelta
-
-				my $time_t = POSIX::mktime( 0, 30, 10, 12, 11, 95 );
-                    print "Date = ", POSIX::ctime($time_t);
-
+				say "input $mes,$dia,$hora,$anio, duracion:$duracion";
+				my $retira_t = POSIX::mktime(0,0,$hora,$dia,$mes-1,$anio-1900);
+                my $devuelve_t = POSIX::mktime(0,0,$hora+$duracion,$dia,$mes-1,$anio-1900);
+               	
+                say "retira: $retira_t, devuelve: $devuelve_t";
+                say "retira = ", POSIX::ctime($retira_t),"devuelve = ",POSIX::ctime($devuelve_t);
+               
+                my $dif_t = ($devuelve_t - $retira_t);
+               	
+               	# my $dif_horas = ($dif_t/60)/60;
+                
 
 				# my $start_ts      = POSIX::mktime( 0, 0, 0, $d,     $m - 1, $y - 1900 );
 				# my $end_ts        = POSIX::mktime( 0, 0, 0, $d + 1, $m - 1, $y - 1900 );
