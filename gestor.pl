@@ -155,7 +155,7 @@ say "retira = ", POSIX::ctime($retira_t),"devuelve = ",POSIX::ctime($devuelve_t)
 						say "p: ".$retira_t."-".$devuelve_t;
 						say "r: ".$registros{$item}{$i}{'cuando'};
 
-                    	my ($s,$v) = split (/-/,$registros{$item}{$i}{'cuando'});
+                    	my ($s,$v) = split /-/,$registros{$item}{$i}{'cuando'};
                     
                     	if (($retira_t > $s && $retira_t < $v) || 
 	                    	( $devuelve_t < $s && $devuelve_t > $v )){
