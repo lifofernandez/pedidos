@@ -4,7 +4,7 @@ Gestor de pedidos de equipamiento para ATAM
 # notas / diseño
 Por cada pedido:
 
-* [x]Si el item ESTÁ en en el inventario 
+* [x] Si el item ESTÁ en en el inventario 
     - [x] Revisar integridad del de pedido
         + [x] Sanitizar/Normalizar pedido (mes: 0..12, dia: 0..DINAMICO, HORA: 0..23)
         + [x] Limitar duracion a 24 (mas adelante aceptaremos cosas como 72h o 3d)
