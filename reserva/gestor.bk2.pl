@@ -76,15 +76,18 @@ sub comprobrar_pedido {
 	#   reservas => {arboldereservas}
 	# };
 
+
 	my $por_que = "";
 	my $congrats = "";
 
 	my $item_existe;
 	my $duracion_correcta;
-	my $fecha_correcta;
 
+	my $fecha_correcta; 
 	my $sin_registros;
-	my $item_disponible;
+
+
+	my $item_disponible; 
 
 	my %palabras = map { $_ => 1 } @inventario; # CABEZEADA POR REVISAR
 
@@ -93,6 +96,7 @@ sub comprobrar_pedido {
 		$item_existe = 0;
 	}else {
 		$item_existe = 1;
+
 		if($duracion > $limite_duracion){
 			$por_que = "La duracion [$duracion] > $limite_duracion";
 
@@ -107,20 +111,42 @@ sub comprobrar_pedido {
 
 			}else{
 
+				my $date_retira = DateTime->new(
+					year      => $anio, # Default Global
+					month     => $mes,
+					day       => $dia,
+					hour      => $hora,
+				);
+
+				my $date_devulve = $date_retira->clone->add( hours => $duracion );
+
+				# Recoreremos todas las horas del pedido
+
+				my %matriz_pedido;
+				my $c = 0;
+				while ($date_retira <= $date_devulve) {
+					my $y = $date_retira->year;
+					my $m = $date_retira->month;
+					my $d = $date_retira->day;
+					my $h = $date_retira->hour;
+
+					$matriz_pedido{$y}{$m}{$d}{$h} = $duracion - $c;
+
+					# Para evitar iteraciones podria directamente
+					# fijarme el valor de cada hora acá... en la primera
+					# que da "ocupada" rechazo el pedido.
+
+					$date_retira->add(hours => 1); # siguiente 1 dia
+					$c++;
+				}
+
 				if($item_existe && $registros{$item}){
-					$por_que = "hay q Consultar Disponiblidad";
+					$por_que = "hay q buscar disponiblidad";
 
 					# Ahora comprobar disponibilidad del item
-					# obtener timestam salida y calular vuelta
-					# armar array/hash para pasarlos a evaluacion
 
-					my ( $y, $m, $d ) = unpack 'A4 A2 A2', $date;
-					my $start_ts      = POSIX::mktime( 0, 0, 0, $d,     $m - 1, $y - 1900 );
-					my $end_ts        = POSIX::mktime( 0, 0, 0, $d + 1, $m - 1, $y - 1900 );
-
-					my $pedido_OK = {$item,@fechas = ($sale,$vuelve]};
 					my ($disponble,$mensaje) = disponiblidad_pedido(
-						# %pedido,
+						\%matriz_pedido,
 						$registros{$item}{reservas}
 					);
 
@@ -134,11 +160,12 @@ sub comprobrar_pedido {
 					$sin_registros = 1;
 					$congrats = 'registro LIBRE de reservas';
 
-					# Ver como hacer esto aca y encapsular
+					# Ver como hacer esto aca y des encapsular
 					# push $registros{$item}{reservas}{2016}, $matriz_pedido->{2016};
-
 				}
+
 			}
+
 		}
 	}
 
@@ -167,6 +194,7 @@ sub fecha_correcta {
 	my $hora_correcta;
 	my $por_que;
 
+
 	if (($mes > 0) && ($mes < 13) ) {
 		$mes_correcto = 1;
 		if (($dia > 0) && ($dia < 32) ) {
@@ -184,6 +212,7 @@ sub fecha_correcta {
 		$por_que = "el mes: [$mes]"
 	}
 
+
 	if ($mes_correcto && $dia_correcto && $hora_correcta){
 		return 1;
 	}else{
@@ -199,12 +228,51 @@ sub disponiblidad_pedido {
 	# my $pedidoJson = $json->encode($pedido); # Cambiar nombre Registro
 	# print Dumper($pedidoJson);
 
+	foreach my $anio (sort keys %$pedido) {
+	 	say "anio:$anio" if $verbose;
 
+		foreach my $mes ( sort keys %{$pedido->{$anio}}) {
+			say "-mes: $mes" if $verbose;
+
+			foreach my $dia ( sort keys %{$pedido->{$anio}{$mes}} ) {
+				say "--dia:$dia" if $verbose;
+
+				say "---horas:" if $verbose;
+
+				my $libre = 0; # CABEZEADA POR MEJORAR
+				foreach my $hora ( sort { $a <=> $b } 
+					keys %{$pedido->{$anio}{$mes}{$dia}}) {
+
+					my $duracion = $pedido->{$anio}{$mes}{$dia}{$hora};
+					print "$hora:" if $verbose;
+
+					# comparar con registros:
+					$libre = 0; # CABEZEADA POR MEJORAR
+					if($registro_reservas->{$anio}{$mes}{$dia}{$hora}){
+						my $vuelve = $registro_reservas->{$anio}{$mes}{$dia}{$hora};
+						print "ocupado " if $verbose;
+						return 0,"el $dia/$mes a las $hora ocupado x $vuelve hs";
+					}else{
+						print "libre " if $verbose;
+						$libre = 1; # CABEZEADA POR MEJORAR
+					}
+					
+				}
+
+				print "\n" if $verbose;
+
+				if($libre) { # CABEZEADA POR MEJORAR
+					return 1,"todas las horas LIBRES";
+				}
+			}
+
+		}
+	 }
 }
 
 
 
-sub reservar_pedido {
+sub reservarPedido {
 
 	# my $p = $_[-1];
 	# push $_[0], $p;
