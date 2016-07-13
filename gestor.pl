@@ -97,8 +97,8 @@ sub comprobrar_pedido {
 			$por_que = "La duracion [$duracion] > $limite_duracion";
 
 		}else {
-			$duracion_correcta = 1;
 
+			$duracion_correcta = 1;
 			my ($resultado, $mensaje) = fecha_correcta($mes,$dia,$hora);
 			$fecha_correcta = $resultado;
 
@@ -107,26 +107,34 @@ sub comprobrar_pedido {
 
 			}else{
 
+				# Obtener timestam salida y calcular vuelta
+
+				my $time_t = POSIX::mktime( 0, 30, 10, 12, 11, 95 );
+                    print "Date = ", POSIX::ctime($time_t);
+
+
+				# my $start_ts      = POSIX::mktime( 0, 0, 0, $d,     $m - 1, $y - 1900 );
+				# my $end_ts        = POSIX::mktime( 0, 0, 0, $d + 1, $m - 1, $y - 1900 );
+
+				# Armar array/hash para pasarlos a evaluacion/reserva
+
+				# my $pedido_OK = {$item,@fechas = [$sale,$vuelve]};
+
+
 				if($item_existe && $registros{$item}){
-					$por_que = "hay q Consultar Disponiblidad";
 
-					# Ahora comprobar disponibilidad del item
-					# obtener timestam salida y calular vuelta
-					# armar array/hash para pasarlos a evaluacion
+					$por_que = "Debo q consultar disponiblidad";
 
-					my ( $y, $m, $d ) = unpack 'A4 A2 A2', $date;
-					my $start_ts      = POSIX::mktime( 0, 0, 0, $d,     $m - 1, $y - 1900 );
-					my $end_ts        = POSIX::mktime( 0, 0, 0, $d + 1, $m - 1, $y - 1900 );
+					# Comprobar disponibilidad del item
 
-					my $pedido_OK = {$item,@fechas = ($sale,$vuelve]};
-					my ($disponble,$mensaje) = disponiblidad_pedido(
-						# %pedido,
-						$registros{$item}{reservas}
-					);
+					# my ($disponble,$mensaje) = disponiblidad_pedido(
+					# 	# %pedido,
+					# 	$registros{$item}{reservas}
+					# );
 
-					$item_disponible = $disponble;
-					$por_que = $mensaje;
-					$congrats = $mensaje;
+					# $item_disponible = $disponble;
+					# $por_que = $mensaje;
+					# $congrats = $mensaje;
 
 
 				}else{
@@ -134,7 +142,7 @@ sub comprobrar_pedido {
 					$sin_registros = 1;
 					$congrats = 'registro LIBRE de reservas';
 
-					# Ver como hacer esto aca y encapsular
+					# Ver como hacer esto aca y despues encapsular
 					# push $registros{$item}{reservas}{2016}, $matriz_pedido->{2016};
 
 				}
@@ -268,6 +276,47 @@ sub informeReservas {
 
 
 # Basura / Reserva
+
+
+
+
+# http://docstore.mik.ua/orelly/perl3/prog/ch03_15.htm
+
+#DATE RELATED
+# Converts a time as returned by the time function to a 9-element
+#        		list with the time analyzed for the local time zone. Typically
+#        		used as follows:
+
+#             #     0    1    2     3     4    5     6     7     8
+#             my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
+#                                                         localtime(time);
+
+
+
+
+# timestamp to fecha
+# my $date = 201103116;
+
+# my ( $y, $m, $d ) = unpack 'A4 A2 A2', $date;
+# print Dumper($d);
+# my $start_ts      = POSIX::mktime( 0, 0, 0, $d,     $m - 1, $y - 1900 );
+# my $end_ts        = POSIX::mktime( 0, 0, 0, $d + 1, $m - 1, $y - 1900 );
+
+
+
+# see POSIX
+
+# And with mktime it's perfectly okay to just add negatives to values. 
+# So if you need to have 23:59:59 as your end date as suggested in the comments,
+# you can just fix it up with this:
+
+# Technically $end_ts is the first timestamp of the next day. 
+# Easily fixed by subtracting 1 though, if necessary. – Anomie Mar 16 '11 at 14:08
+
+
+# my $end_ts = POSIX::mktime( -1, 0, 0, $d + 1, $m - 1, $y - 1900 );
+# (Although, I would just like to note that the excluded endpoint is not an 
+# unknown case in programming.)
 
 # my ($sec,$min,$hour,$day,$month,$yr19,@rest) = localtime(time);
 # ####### To get the localtime of your system
