@@ -1,7 +1,7 @@
-item,mes,dia,hora,duracion
-gg,1,31,23,24
-error,3,13,7,12
-gg,3,13,7,24
-gg,2,1,23,1
-item2,3,13,7,12
-microfonoSM58,3,13,12,23
+item,mes,dia,hora,duracion,quien,comment
+gg,1,31,23,24,raul,ble ble,
+oo,3,13,7,12,roberto,Lorem ipsum dolor sit amet,
+gg,3,13,7,24,fulano,estemmm,
+gg,2,1,23,1,roberto,estemmm,
+item2,3,13,7,12,alberto,eee,
+microfonoSM58,3,13,12,23,rrrrm,klrlr,

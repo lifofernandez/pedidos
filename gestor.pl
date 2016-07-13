@@ -4,6 +4,9 @@ use feature 'say';
 # use v5.20;
 
 use Data::Dumper;
+use Data::Uniqid qw ( luniqid );
+
+
 use DateTime;
 
 
@@ -13,31 +16,28 @@ use File::Slurp;
 
 use JSON qw( );
 
+# Args / Params
+my $verbose = 0;
+if('v' ~~ @ARGV){ $verbose = 1; }
 
 # Defaults Globales
 my ($sec,$min,$hour,$day,$month,$yr19,@rest) = localtime(time);
-my $anio = $yr19+1900; #año actual, (salvo q se especifique?)
+my $anio = $yr19+1900; # año actual ¿salvo q se espesifique?
+my $limite_duracion = 24;
 
-my $verbose = 0;
-if('v' ~~ @ARGV){
-	$verbose = 1;
-}
-
-# Inventario (items disponibles) ###
+# Inventario (items disponibles) 
 my @inventario =  split /\W/, read_file('inventario');
 
-# Pedidos (input) ##################
+# Pedidos (input) 
 my @pedidos = read_file('pedidos.csv');
 
-# Registro (almacen de reservas) ###
+# Registro (almacen de reservas) 
 my $registro_text = read_file('registro.json');
 my $json = JSON->new;
-my $registroJson = $json->decode($registro_text); # Cambiar nombre Registro
-
+my $registroJson = $json->decode($registro_text); 
 my %registros = %$registroJson;
 
 
-# informeReservas();
 
 foreach (@pedidos){
 	# chomp;
@@ -64,17 +64,26 @@ sub prosesar{
 # Subrutinas
 sub comprobrar_pedido {
 
-	my $limite_duracion = 24;
+	my $id = luniqid; #ID de pedido
 
-	my ( $item, $mes, $dia, $hora, $duracion ) =  split /\W/, $_;
+	my ($item, 
+		$mes, 
+		$dia, 
+		$hora, 
+		$duracion,
+		$quien,
+		$comment ) =  split /\,/, $_;
 
-	# Esta sub creo, deberia returnear pedido ya normalizado
-	# para ingresar a los registros
 
-	# my $pedidoNormalizado = {
-	#   item => $item,
-	#   reservas => {arboldereservas}
-	# };
+=pod
+	Esta sub creo, deberia returnear pedido ya normalizado
+	para ingresar a los registros
+
+	my $pedidoNormalizado = {
+	  item => $item,
+	  reservas => {arboldereservas}
+	};
+=cut
 
 	my $por_que = "";
 	my $congrats = "";
@@ -107,25 +116,33 @@ sub comprobrar_pedido {
 
 			}else{
 
-				# Obtener timestam salida y calcular vuelta
-				say "input $mes,$dia,$hora,$anio, duracion:$duracion";
+				# Obtener timestamp salida y calcular vuelta
 				my $retira_t = POSIX::mktime(0,0,$hora,$dia,$mes-1,$anio-1900);
-                my $devuelve_t = POSIX::mktime(0,0,$hora+$duracion,$dia,$mes-1,$anio-1900);
-               	
-                say "retira: $retira_t, devuelve: $devuelve_t";
-                say "retira = ", POSIX::ctime($retira_t),"devuelve = ",POSIX::ctime($devuelve_t);
-               
-                my $dif_t = ($devuelve_t - $retira_t);
-               	
-               	# my $dif_horas = ($dif_t/60)/60;
-                
+				my $devuelve_t = POSIX::mktime(0,0,$hora+$duracion,$dia,$mes-1,$anio-1900);
+				
 
-				# my $start_ts      = POSIX::mktime( 0, 0, 0, $d,     $m - 1, $y - 1900 );
-				# my $end_ts        = POSIX::mktime( 0, 0, 0, $d + 1, $m - 1, $y - 1900 );
+=pod
+# Comprobaciones (borrar)
+say "retira: $retira_t, devuelve: $devuelve_t";
+say "retira = ", POSIX::ctime($retira_t),"devuelve = ",POSIX::ctime($devuelve_t);
+=cut
+
 
 				# Armar array/hash para pasarlos a evaluacion/reserva
 
-				# my $pedido_OK = {$item,@fechas = [$sale,$vuelve]};
+				my $pedido_ok = {
+					$item => {
+						$id  => {
+							cuando		=> time, 
+							sale		=> $retira_t, 
+							vuelve		=> $devuelve_t,
+							quien		=> $quien,
+							comentario	=> $comment
+						}
+					}
+				};
+
+				print Dumper($pedido_ok);
 
 
 				if($item_existe && $registros{$item}){
@@ -135,7 +152,7 @@ sub comprobrar_pedido {
 					# Comprobar disponibilidad del item
 
 					# my ($disponble,$mensaje) = disponiblidad_pedido(
-					# 	# %pedido,
+					# 	# %pedido_ok,
 					# 	$registros{$item}{reservas}
 					# );
 

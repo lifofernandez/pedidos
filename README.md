@@ -28,3 +28,17 @@ Por cada pedido:
 * [x] Si el item NO está en en el inventario
     - [x] RECHAZAR
 
+
+
+
+# Estructura 
+
+item
+    ID:{entra=>'13423',sale=>'13423',quien,comentario,cuando}
+    ID:{entra=>'13423',sale=>'13423',quien,comentario,cuando}
+    
+
+item
+    resrvas
+        ID:[entra,sale]
+        ID:[entra,sale]
