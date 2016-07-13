@@ -141,8 +141,18 @@ say "retira = ", POSIX::ctime($retira_t),"devuelve = ",POSIX::ctime($devuelve_t)
 						}
 					}
 				};
+                foreach my $i (keys %registros{$item}){
+                    my ($s,$v) = split (/-/,$registros{$item}{$i}{'cuando'});
+                    if (($retira_t > $s && $retira_t < $v) || ( $devuelve_t < $s && $devuelve_t > $v )){
+                        #No se puede prestar
+                    } else {
+                        #si se puede prestar
+                    }
+
+                }
 
 				print Dumper($pedido_ok);
+
 
 
 				if($item_existe && $registros{$item}){
