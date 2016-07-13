@@ -48,7 +48,6 @@ foreach (@pedidos){
 }
 
 
-# informeReservas();
 
 # Subs
 sub prosesar{
@@ -133,38 +132,38 @@ say "retira = ", POSIX::ctime($retira_t),"devuelve = ",POSIX::ctime($devuelve_t)
 				my $pedido_ok = {
 					$item => {
 						$id  => {
-							cuando		=> time, 
-							sale		=> $retira_t, 
-							vuelve		=> $devuelve_t,
+							cuando		=> $retira_t."-".$devuelve_t, 
 							quien		=> $quien,
 							comentario	=> $comment
 						}
 					}
 				};
-                foreach my $i (keys %registros{$item}){
-                    my ($s,$v) = split (/-/,$registros{$item}{$i}{'cuando'});
-                    if (($retira_t > $s && $retira_t < $v) || ( $devuelve_t < $s && $devuelve_t > $v )){
-                        #No se puede prestar
-                    } else {
-                        #si se puede prestar
-                    }
 
-                }
+                
 
-				print Dumper($pedido_ok);
+				# print Dumper($pedido_ok);
 
 
 
 				if($item_existe && $registros{$item}){
 
-					$por_que = "Debo q consultar disponiblidad";
+					$por_que = "Debo consultar disponiblidad";
 
 					# Comprobar disponibilidad del item
 
-					# my ($disponble,$mensaje) = disponiblidad_pedido(
-					# 	# %pedido_ok,
-					# 	$registros{$item}{reservas}
-					# );
+					foreach my $i (keys %{$registros{$item}}){
+						say "p: ".$retira_t."-".$devuelve_t;
+						say "r: ".$registros{$item}{$i}{'cuando'};
+
+                    	my ($s,$v) = split (/-/,$registros{$item}{$i}{'cuando'});
+                    
+                    	if (($retira_t > $s && $retira_t < $v) || 
+	                    	( $devuelve_t < $s && $devuelve_t > $v )){
+	                        say "NO se puede prestar"
+	                   	} else {
+	                        say "SI se puede prestar";
+	                    }
+	               	}
 
 					# $item_disponible = $disponble;
 					# $por_que = $mensaje;
