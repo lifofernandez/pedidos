@@ -6,7 +6,7 @@ Por cada pedido:
 
 Si esta en en el inventario 
 
-* Revisar integridad del de pedido
+* [ ] Revisar integridad del de pedido
     - [x] Sanitizar/Normalizar pedido (mes: 0..12, dia: 0..DINAMICO, HORA: 0..24)
     - [x] limitar duracion a 24 (mas adelante aceptaremos cosas como 72h o 3d)
     - [ ] Armar una par de valores retira-devuelve (devuelve = retira + duracion)
