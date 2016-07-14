@@ -117,21 +117,16 @@ sub comprobrar_pedido {
 			}else{
 
 				# Obtener timestamp salida y calcular vuelta
-				# my $retira_t = POSIX::mktime(0,0,$hora,$dia,$mes-1,$anio-1900);
-				# my $devuelve_t = POSIX::mktime(0,0,$hora+$duracion,$dia,$mes-1,$anio-1900);
-				
-				my $retira_t = $hora;
-				my $devuelve_t = $hora+$duracion;
-
-
-
+				my $pedido_retira = POSIX::mktime(0,0,$hora,$dia,$mes-1,$anio-1900);
+				my $pedido_devuelve = POSIX::mktime(0,0,
+					$hora+$duracion,$dia,$mes-1,$anio-1900);
+			
 
 				# Armar array/hash para pasarlos a evaluacion/reserva
-
 				my $pedido_ok = {
 					$item => {
 						$id  => {
-							cuando		=> $retira_t."-".$devuelve_t, 
+							cuando		=> $pedido_retira."-".$pedido_devuelve, 
 							quien		=> $quien,
 							comentario	=> $comment
 						}
@@ -151,16 +146,20 @@ sub comprobrar_pedido {
 					# Comprobar disponibilidad del item
 
 					foreach my $i (keys %{$registros{$item}}){
-						say "p: ".$retira_t."-".$devuelve_t;
+						say "p: ".$pedido_retira."-".$pedido_devuelve;
 						say "r: ".$registros{$item}{$i}{'cuando'};
 
-                    	my ($s,$v) = split /-/,$registros{$item}{$i}{'cuando'};
-                    
-                    	if (($retira_t > $s && $retira_t < $v) || 
-	                    	( $devuelve_t < $s && $devuelve_t > $v )){
-	                        say "$item,NO se puede prestar"
+                    	my (
+                    		$registro_retira,
+                    		$registro_devuelve
+                    	) = split /-/,$registros{$item}{$i}{'cuando'};
+
+                    	if( $pedido_retira < $registro_devuelve && 
+                    		$registro_retira < $pedido_devuelve ){
+	                        say "$item, NO se puede prestar"
+
 	                   	} else {
-	                        say "$item,SI se puede prestar";
+	                        say "$item, SI se puede prestar";
 	                    }
 	               	}
 
