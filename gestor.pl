@@ -27,6 +27,8 @@ my $limite_duracion = 24;
 
 # Inventario (items disponibles) 
 my @inventario =  split /\W/, read_file('inventario');
+my %inventario = map { $_ => 1 } @inventario; # CABEZEADA POR REVISAR
+
 
 # Pedidos (input) 
 my @pedidos = read_file('pedidos.csv');
@@ -63,7 +65,7 @@ sub prosesar{
 # Subrutinas
 sub comprobrar_pedido {
 
-	my $id = luniqid; #ID de pedido
+	my $id = luniqid; # ID de pedido
 
 	my ($item, 
 		$mes, 
@@ -94,9 +96,8 @@ sub comprobrar_pedido {
 	my $sin_registros;
 	my $item_disponible;
 
-	my %palabras = map { $_ => 1 } @inventario; # CABEZEADA POR REVISAR
 
-	if(!exists($palabras{$item})){
+	if(!exists($inventario{$item})){
 		$por_que = "No existe [$item] en el inventario";
 		$item_existe = 0;
 	}else {
@@ -116,15 +117,13 @@ sub comprobrar_pedido {
 			}else{
 
 				# Obtener timestamp salida y calcular vuelta
-				my $retira_t = POSIX::mktime(0,0,$hora,$dia,$mes-1,$anio-1900);
-				my $devuelve_t = POSIX::mktime(0,0,$hora+$duracion,$dia,$mes-1,$anio-1900);
+				# my $retira_t = POSIX::mktime(0,0,$hora,$dia,$mes-1,$anio-1900);
+				# my $devuelve_t = POSIX::mktime(0,0,$hora+$duracion,$dia,$mes-1,$anio-1900);
 				
+				my $retira_t = $hora;
+				my $devuelve_t = $hora+$duracion;
 
-=pod
-# Comprobaciones (borrar)
-say "retira: $retira_t, devuelve: $devuelve_t";
-say "retira = ", POSIX::ctime($retira_t),"devuelve = ",POSIX::ctime($devuelve_t);
-=cut
+
 
 
 				# Armar array/hash para pasarlos a evaluacion/reserva
@@ -159,9 +158,9 @@ say "retira = ", POSIX::ctime($retira_t),"devuelve = ",POSIX::ctime($devuelve_t)
                     
                     	if (($retira_t > $s && $retira_t < $v) || 
 	                    	( $devuelve_t < $s && $devuelve_t > $v )){
-	                        say "NO se puede prestar"
+	                        say "$item,NO se puede prestar"
 	                   	} else {
-	                        say "SI se puede prestar";
+	                        say "$item,SI se puede prestar";
 	                    }
 	               	}
 
@@ -328,14 +327,16 @@ sub informeReservas {
 
 
 # timestamp to fecha
-# my $date = 201103116;
+# my $date = 20160131;
+
 
 # my ( $y, $m, $d ) = unpack 'A4 A2 A2', $date;
-# print Dumper($d);
-# my $start_ts      = POSIX::mktime( 0, 0, 0, $d,     $m - 1, $y - 1900 );
-# my $end_ts        = POSIX::mktime( 0, 0, 0, $d + 1, $m - 1, $y - 1900 );
 
+# my $start_ts      = POSIX::mktime( 0, 0, 1, $d, $m - 1, $y - 1900 );
+# my $end_ts        = POSIX::mktime( 0, 0, 23, $d, $m - 1, $y - 1900 );
+# print Dumper($start_ts."-".$end_ts);
 
+# say "retira = ", POSIX::ctime($start_ts),"devuelve = ",POSIX::ctime($end_ts);
 
 # see POSIX
 
