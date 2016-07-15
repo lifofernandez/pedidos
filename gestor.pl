@@ -46,17 +46,17 @@ foreach (@pedidos){
 	if( $_ =~ /^\s*item,mes,/ ){ # borrrar primera linea
 		next;
 	}
-	prosesar($_);
+	procesar($_);
 }
 
 
 
 # Subs
-sub prosesar{
+sub procesar{
 	my ($resultado, $mensaje) = comprobrar_pedido($_);
 	print "\n" if $verbose;
 
-	# say $mensaje;
+	say $mensaje;
 }
 
 
@@ -132,12 +132,8 @@ sub comprobrar_pedido {
 						}
 					}
 				};
-
-                
-
+               
 				# print Dumper($pedido_ok);
-
-
 
 				if($item_existe && $registros{$item}){
 
@@ -146,20 +142,23 @@ sub comprobrar_pedido {
 					# Comprobar disponibilidad del item
 
 					foreach my $i (keys %{$registros{$item}}){
-						say "p: ".$pedido_retira."-".$pedido_devuelve;
-						say "r: ".$registros{$item}{$i}{'cuando'};
+						# say "p: ".$pedido_retira."-".$pedido_devuelve;
+						# say "r: ".$registros{$item}{$i}{'cuando'};
 
                     	my (
                     		$registro_retira,
                     		$registro_devuelve
                     	) = split /-/,$registros{$item}{$i}{'cuando'};
 
+                    	# http://c2.com/cgi/wiki?TestIfDateRangesOverlap
+                    	# http://stackoverflow.com/questions/13513932/algorithm-to-detect-overlapping-periods
                     	if( $pedido_retira < $registro_devuelve && 
                     		$registro_retira < $pedido_devuelve ){
-	                        say "$item, NO se puede prestar"
+	                        $por_que = "$item, no estará disponble esa fecha";
 
 	                   	} else {
-	                        say "$item, SI se puede prestar";
+	                   		$item_disponible = 1;
+	                        $congrats = "$item, SI se puede prestar";
 	                    }
 	               	}
 
