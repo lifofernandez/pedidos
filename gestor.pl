@@ -53,10 +53,12 @@ foreach (@pedidos){
 
 # Subs
 sub procesar{
-	my ($resultado, $mensaje) = comprobrar_pedido($_);
+	my ($aprobado, $mensaje,$pedido_para_reservar) = comprobrar_pedido($_);
 	print "\n" if $verbose;
-
-	say $mensaje;
+		say $mensaje;
+	if($aprobado){
+		reservar_pedido($pedido_para_reservar);
+	}
 }
 
 
@@ -65,7 +67,6 @@ sub procesar{
 # Subrutinas
 sub comprobrar_pedido {
 
-	my $id = luniqid; # ID de pedido
 
 	my ($item, 
 		$mes, 
@@ -96,6 +97,8 @@ sub comprobrar_pedido {
 	my $sin_registros;
 	my $item_disponible;
 
+	my $pedido_OK;
+
 
 	if(!exists($inventario{$item})){
 		$por_que = "No existe [$item] en el inventario";
@@ -106,8 +109,8 @@ sub comprobrar_pedido {
 			$por_que = "La duracion [$duracion] > $limite_duracion";
 
 		}else {
-
 			$duracion_correcta = 1;
+
 			my ($resultado, $mensaje) = fecha_correcta($mes,$dia,$hora);
 			$fecha_correcta = $resultado;
 
@@ -116,21 +119,19 @@ sub comprobrar_pedido {
 
 			}else{
 
-				# Obtener timestamp salida y calcular vuelta
-				my $pedido_retira = POSIX::mktime(0,0,$hora,$dia,$mes-1,$anio-1900);
-				my $pedido_devuelve = POSIX::mktime(0,0,
+				# Obtener timestamp retira y calcular vuelta
+				my $pedido_retira = POSIX::mktime(0,0,
+					$hora,$dia,$mes-1,$anio-1900);
+				my $pedido_vuelve = POSIX::mktime(0,0,
 					$hora+$duracion,$dia,$mes-1,$anio-1900);
 			
 
 				# Armar array/hash para pasarlos a evaluacion/reserva
-				my $pedido_ok = {
-					$item => {
-						$id  => {
-							cuando		=> $pedido_retira."-".$pedido_devuelve, 
+				$pedido_OK = {
+							item 		=> $item,
+							cuando		=> $pedido_retira."-".$pedido_vuelve, 
 							quien		=> $quien,
 							comentario	=> $comment
-						}
-					}
 				};
                
 				# print Dumper($pedido_ok);
@@ -140,23 +141,19 @@ sub comprobrar_pedido {
 					$por_que = "Debo consultar disponiblidad";
 
 					# Comprobar disponibilidad del item
-
-					foreach my $i (keys %{$registros{$item}}){
-						# say "p: ".$pedido_retira."-".$pedido_devuelve;
-						# say "r: ".$registros{$item}{$i}{'cuando'};
+					foreach my $reserva (keys %{$registros{$item}}){
 
                     	my (
                     		$registro_retira,
-                    		$registro_devuelve
-                    	) = split /-/,$registros{$item}{$i}{'cuando'};
+                    		$registro_vuelve
+                    	) = split /-/,$registros{$item}{$reserva}{'cuando'};
 
                     	# http://c2.com/cgi/wiki?TestIfDateRangesOverlap
                     	# http://stackoverflow.com/questions/13513932/algorithm-to-detect-overlapping-periods
-                    	if( $pedido_retira < $registro_devuelve && 
-                    		$registro_retira < $pedido_devuelve ){
+                    	if( $pedido_retira < $registro_vuelve && 
+                    		$registro_retira < $pedido_vuelve ){
 	                        $por_que = "$item, no estará disponble esa fecha";
-
-	                   	} else {
+	                   	}else{
 	                   		$item_disponible = 1;
 	                        $congrats = "$item, SI se puede prestar";
 	                    }
@@ -181,19 +178,16 @@ sub comprobrar_pedido {
 	}
 
 
-	if ($item_existe
-		&& $duracion_correcta
-		&& $fecha_correcta
-		&& ($sin_registros || $item_disponible)
+	if (
+		$item_existe && 
+		$duracion_correcta &&
+		$fecha_correcta && 
+		( $sin_registros || $item_disponible )
 		){
-		return 1, "$item\t$dia/$mes:$hora\tx$duracion\tAPROBADO\t($congrats)";
+		return 1, "$item\t$dia/$mes:$hora\tx$duracion\tAPROBADO\t($congrats)",$pedido_OK;
 	}else{
 		return 0, "$item\t$dia/$mes:$hora\tx$duracion\tRECHAZADO\t($por_que)";
 	}
-
-
-
-
 }
 
 
@@ -219,7 +213,7 @@ sub fecha_correcta {
 			$por_que = "el DIA [$dia]"
 		}
 	}else{
-		$por_que = "el mes: [$mes]"
+		$por_que = "el MES: [$mes]"
 	}
 
 	if ($mes_correcto && $dia_correcto && $hora_correcta){
@@ -243,6 +237,11 @@ sub disponiblidad_pedido {
 
 
 sub reservar_pedido {
+	my $p  = $_[0];
+	my $id = luniqid; # ID de pedido
+
+	print Dumper($p);
+	# push $registros{$p->{item}}{reservas}, $pedido
 
 	# my $p = $_[-1];
 	# push $_[0], $p;
@@ -281,6 +280,7 @@ sub informeReservas {
 	}
 }
 
+
 # Utiles
 
 # sub print_hash{
@@ -302,26 +302,17 @@ sub informeReservas {
 
 
 
-
-
-
 # Basura / Reserva
-
-
-
 
 # http://docstore.mik.ua/orelly/perl3/prog/ch03_15.htm
 
 #DATE RELATED
 # Converts a time as returned by the time function to a 9-element
-#        		list with the time analyzed for the local time zone. Typically
-#        		used as follows:
+# list with the time analyzed for the local time zone. Typically
+# used as follows:
 
-#             #     0    1    2     3     4    5     6     7     8
-#             my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) =
-#                                                         localtime(time);
-
-
+#  #     0    1    2     3     4    5     6     7     8
+#  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
 
 
 # timestamp to fecha
