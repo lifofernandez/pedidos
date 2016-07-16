@@ -2,18 +2,11 @@ use strict;
 use warnings;
 use feature 'say';
 # use v5.20;
-
 use Data::Dumper;
 use Data::Uniqid qw ( luniqid );
-
-
 use DateTime;
-
-
 # use DateTime;
-
 use File::Slurp;
-
 use JSON qw( );
 
 # Args / Params
@@ -25,21 +18,18 @@ my ($sec,$min,$hour,$day,$month,$yr19,@rest) = localtime(time);
 my $anio = $yr19+1900; # año actual ¿salvo q se espesifique?
 my $limite_duracion = 24;
 
-# Inventario (items disponibles) 
+# Inventario (items disponibles)
 my @inventario =  split /\W/, read_file('inventario');
 my %inventario = map { $_ => 1 } @inventario; # CABEZEADA POR REVISAR
 
-
-# Pedidos (input) 
+# Pedidos (input)
 my @pedidos = read_file('pedidos.csv');
 
-# Registro (almacen de reservas) 
+# Registro (almacen de reservas)
 my $registro_text = read_file('registro.json');
 my $json = JSON->new;
-my $registroJson = $json->decode($registro_text); 
+my $registroJson = $json->decode($registro_text);
 my %registros = %$registroJson;
-
-
 
 foreach (@pedidos){
 	# chomp;
@@ -49,9 +39,7 @@ foreach (@pedidos){
 	procesar($_);
 }
 
-
-
-# Subs
+#
 sub procesar{
 	my ($aprobado, $mensaje,$pedido_para_reservar) = comprobrar_pedido($_);
 	print "\n" if $verbose;
@@ -61,48 +49,36 @@ sub procesar{
 	}
 }
 
-
-
-
 # Subrutinas
 sub comprobrar_pedido {
 
-
-	my ($item, 
-		$mes, 
-		$dia, 
-		$hora, 
+	my ($item,
+		$mes,
+		$dia,
+		$hora,
 		$duracion,
 		$quien,
 		$comment ) =  split /\,/, $_;
 
-
-=pod
-	Esta sub creo, deberia returnear pedido ya normalizado
-	para ingresar a los registros
-
-	my $pedidoNormalizado = {
-	  item => $item,
-	  reservas => {arboldereservas}
-	};
-=cut
-
-	my $por_que = "";
-	my $congrats = "";
-
+	# Que el pedido este en condiciones
 	my $item_existe;
 	my $duracion_correcta;
 	my $fecha_correcta;
-
+	# Dispnibilidad del item
 	my $sin_registros;
 	my $item_disponible;
 
+	# Pedido listo para reservar
 	my $pedido_OK;
 
+	# Informacion para el usuario
+	my $por_que = "";
+	my $congrats = "";
 
 	if(!exists($inventario{$item})){
-		$por_que = "No existe [$item] en el inventario";
 		$item_existe = 0;
+		$por_que = "No existe [$item] en el inventario";
+
 	}else {
 		$item_existe = 1;
 		if($duracion > $limite_duracion){
@@ -111,7 +87,7 @@ sub comprobrar_pedido {
 		}else {
 			$duracion_correcta = 1;
 
-			my ($resultado, $mensaje) = fecha_correcta($mes,$dia,$hora);
+			my ($resultado, $mensaje) = fecha_correcta( $mes, $dia, $hora );
 			$fecha_correcta = $resultado;
 
 			if(!$fecha_correcta) {
@@ -124,64 +100,46 @@ sub comprobrar_pedido {
 					$hora,$dia,$mes-1,$anio-1900);
 				my $pedido_vuelve = POSIX::mktime(0,0,
 					$hora+$duracion,$dia,$mes-1,$anio-1900);
-			
 
-				# Armar array/hash para pasarlos a evaluacion/reserva
 				$pedido_OK = {
-							item 		=> $item,
-							cuando		=> $pedido_retira."-".$pedido_vuelve, 
-							quien		=> $quien,
-							comentario	=> $comment
+					item 		=> $item,
+					cuando		=> $pedido_retira."-".$pedido_vuelve,
+					quien		=> $quien,
+					comentario	=> $comment
 				};
-               
-				# print Dumper($pedido_ok);
 
 				if($item_existe && $registros{$item}){
 
 					$por_que = "Debo consultar disponiblidad";
 
-					# Comprobar disponibilidad del item
 					foreach my $reserva (keys %{$registros{$item}}){
+						my (
+							$registro_retira,
+							$registro_vuelve
+						) = split /-/,$registros{$item}{$reserva}{'cuando'};
 
-                    	my (
-                    		$registro_retira,
-                    		$registro_vuelve
-                    	) = split /-/,$registros{$item}{$reserva}{'cuando'};
-
-                    	# http://c2.com/cgi/wiki?TestIfDateRangesOverlap
-                    	# http://stackoverflow.com/questions/13513932/algorithm-to-detect-overlapping-periods
-                    	if( $pedido_retira < $registro_vuelve && 
-                    		$registro_retira < $pedido_vuelve ){
-	                        $por_que = "$item, no estará disponble esa fecha";
-	                   	}else{
-	                   		$item_disponible = 1;
-	                        $congrats = "$item, SI se puede prestar";
-	                    }
-	               	}
-
-					# $item_disponible = $disponble;
-					# $por_que = $mensaje;
-					# $congrats = $mensaje;
-
+						# http://c2.com/cgi/wiki?TestIfDateRangesOverlap
+						if( $pedido_retira < $registro_vuelve &&
+							$registro_retira < $pedido_vuelve ){
+							$por_que = "No estará disponble [$item] esa fecha";
+						}else{
+							$item_disponible = 1;
+							$congrats = "$item, se encontrará disponible";
+						}
+					}
 
 				}else{
-
 					$sin_registros = 1;
 					$congrats = 'registro LIBRE de reservas';
-
-					# Ver como hacer esto aca y despues encapsular
-					# push $registros{$item}{reservas}{2016}, $matriz_pedido->{2016};
-
 				}
 			}
 		}
 	}
 
-
 	if (
-		$item_existe && 
+		$item_existe &&
 		$duracion_correcta &&
-		$fecha_correcta && 
+		$fecha_correcta &&
 		( $sin_registros || $item_disponible )
 		){
 		return 1, "$item\t$dia/$mes:$hora\tx$duracion\tAPROBADO\t($congrats)",$pedido_OK;
@@ -227,38 +185,19 @@ sub fecha_correcta {
 sub disponiblidad_pedido {
 	my $pedido = $_[0];
 	my $registro_reservas = $_[1];
-
-	# my $pedidoJson = $json->encode($pedido); # Cambiar nombre Registro
-	# print Dumper($pedidoJson);
-
-
 }
 
 
 
 sub reservar_pedido {
 	my $p  = $_[0];
-	my $id = luniqid; # ID de pedido
+	my $pedido_id = luniqid; # ID de pedido
+	my $pedido_identificado = $pedido_id;
 
-	print Dumper($p);
-	# push $registros{$p->{item}}{reservas}, $pedido
+	# push $registros{$registros{$p->{item}}, $p:
 
 	# my $p = $_[-1];
 	# push $_[0], $p;
-
-
-	# # cuando los pedidos lleguen con la duracion chequeada vamos a
-
-	# # for ($i = 0, $i < $p{duracion}, $i++){
-	# #     my $pedido = {
-	# #         # item =>$item,
-	# #         mes => $mes,
-	# #         dia => $dia,
-	# #         hora => $hora,
-	# #         duracion => $duracion,
-	# #     };
-	# # reservarPedido($registros{$item}{reservas}, $pedido);
-	# # }
 
 
 	# # mostrar esto en la matriz para ver que estebien
@@ -329,16 +268,16 @@ sub informeReservas {
 
 # see POSIX
 
-# And with mktime it's perfectly okay to just add negatives to values. 
+# And with mktime it's perfectly okay to just add negatives to values.
 # So if you need to have 23:59:59 as your end date as suggested in the comments,
 # you can just fix it up with this:
 
-# Technically $end_ts is the first timestamp of the next day. 
+# Technically $end_ts is the first timestamp of the next day.
 # Easily fixed by subtracting 1 though, if necessary. – Anomie Mar 16 '11 at 14:08
 
 
 # my $end_ts = POSIX::mktime( -1, 0, 0, $d + 1, $m - 1, $y - 1900 );
-# (Although, I would just like to note that the excluded endpoint is not an 
+# (Although, I would just like to note that the excluded endpoint is not an
 # unknown case in programming.)
 
 # my ($sec,$min,$hour,$day,$month,$yr19,@rest) = localtime(time);
