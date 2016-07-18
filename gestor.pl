@@ -7,11 +7,11 @@ use Data::Uniqid qw ( luniqid );
 use DateTime;
 # use DateTime;
 use File::Slurp;
-use JSON qw( );
+use JSON;
 
 # Args / Params
 my $verbose = 0;
-if('v' ~~ @ARGV){ $verbose = 1; }
+if( 'v' ~~ @ARGV ){ $verbose = 1; }
 
 # Defaults Globales
 my ($sec,$min,$hour,$day,$month,$yr19,@rest) = localtime(time);
@@ -31,6 +31,7 @@ my $json = JSON->new;
 my $registroJson = $json->decode($registro_text);
 my %registros = %$registroJson;
 
+
 foreach (@pedidos){
 	# chomp;
 	if( $_ =~ /^\s*item,mes,/ ){ # borrrar primera linea
@@ -39,11 +40,18 @@ foreach (@pedidos){
 	procesar($_);
 }
 
+
+
 #
 sub procesar{
-	my ($aprobado, $mensaje,$pedido_para_reservar) = comprobrar_pedido($_);
+	my (
+		$aprobado,
+		$mensaje,
+		$pedido_para_reservar
+	) = comprobrar_pedido($_);
+
 	print "\n" if $verbose;
-		say $mensaje;
+	say $mensaje;
 	if($aprobado){
 		reservar_pedido($pedido_para_reservar);
 	}
@@ -58,7 +66,7 @@ sub comprobrar_pedido {
 		$hora,
 		$duracion,
 		$quien,
-		$comment ) =  split /\,/, $_;
+		$comentario ) =  split /\,/, $_;
 
 	# Que el pedido este en condiciones
 	my $item_existe;
@@ -77,12 +85,12 @@ sub comprobrar_pedido {
 
 	if(!exists($inventario{$item})){
 		$item_existe = 0;
-		$por_que = "No existe [$item] en el inventario";
+		$por_que = "$item: No encontrado";
 
 	}else {
 		$item_existe = 1;
-		if($duracion > $limite_duracion){
-			$por_que = "La duracion [$duracion] > $limite_duracion";
+		if( ($duracion >= $limite_duracion) || ($duracion <= 0)  ){
+			$por_que = "Duracion: 0 <= $duracion? >= $limite_duracion";
 
 		}else {
 			$duracion_correcta = 1;
@@ -102,35 +110,32 @@ sub comprobrar_pedido {
 					$hora+$duracion,$dia,$mes-1,$anio-1900);
 
 				$pedido_OK = {
-					item 		=> $item,
-					cuando		=> $pedido_retira."-".$pedido_vuelve,
-					quien		=> $quien,
-					comentario	=> $comment
+						item		=> $item,
+						cuando		=> $pedido_retira."-".$pedido_vuelve,
+						quien		=> $quien,
+						comentario	=> $comentario
 				};
 
-				if($item_existe && $registros{$item}){
-
-					$por_que = "Debo consultar disponiblidad";
-
-					foreach my $reserva (keys %{$registros{$item}}){
+				if( $item_existe && $registros{$item} ){
+					foreach my $reserva ( keys %{$registros{$item}} ){
 						my (
 							$registro_retira,
 							$registro_vuelve
-						) = split /-/,$registros{$item}{$reserva}{'cuando'};
+						) = split /-/, $registros{$item}{$reserva}{'cuando'};
 
 						# http://c2.com/cgi/wiki?TestIfDateRangesOverlap
 						if( $pedido_retira < $registro_vuelve &&
 							$registro_retira < $pedido_vuelve ){
-							$por_que = "No estará disponble [$item] esa fecha";
+							$por_que = "$item: Ocupado";
 						}else{
 							$item_disponible = 1;
-							$congrats = "$item, se encontrará disponible";
+							$congrats = "$item: Disponible";
 						}
 					}
 
 				}else{
 					$sin_registros = 1;
-					$congrats = 'registro LIBRE de reservas';
+					$congrats = "$item: Libre";
 				}
 			}
 		}
@@ -142,9 +147,22 @@ sub comprobrar_pedido {
 		$fecha_correcta &&
 		( $sin_registros || $item_disponible )
 		){
-		return 1, "$item\t$dia/$mes:$hora\tx$duracion\tAPROBADO\t($congrats)",$pedido_OK;
+		return
+			1,
+			"$item\t".
+			"$dia/$mes:$hora\t".
+			"x$duracion\t".
+			"APROBADO\t".
+			"($congrats)",
+			$pedido_OK;
 	}else{
-		return 0, "$item\t$dia/$mes:$hora\tx$duracion\tRECHAZADO\t($por_que)";
+		return
+			0,
+			"$item\t".
+			"$dia/$mes:$hora\t".
+			"x$duracion\t".
+			"RECHAZADO\t".
+			"($por_que)";
 	}
 }
 
@@ -157,71 +175,68 @@ sub fecha_correcta {
 	my $hora_correcta;
 	my $por_que;
 
-	if (($mes > 0) && ($mes < 13) ) {
+	if( ($mes => 1) && ($mes <= 12) ) {
 		$mes_correcto = 1;
-		if (($dia > 0) && ($dia < 32) ) {
-			$dia_correcto = 1; # TO DO: 'dias en el mes' dinamico :)
+		if( ($dia => 1) && ($dia <= 31) ) {
+			# TO DO: 'Dias en el mes' dinamico :)
+			$dia_correcto = 1;
 
-			if ($hora < 24){
+			if ( $hora < 24 ){
 				$hora_correcta = 1;
 			}else{
-				$por_que = "la HORA [$hora]"
+				$por_que = "HORA: $hora?"
 			}
 		}else{
-			$por_que = "el DIA [$dia]"
+			$por_que = "DIA: $dia?"
 		}
 	}else{
-		$por_que = "el MES: [$mes]"
+		$por_que = "MES: $mes?"
 	}
 
-	if ($mes_correcto && $dia_correcto && $hora_correcta){
+	if( $mes_correcto && $dia_correcto && $hora_correcta ){
 		return 1;
 	}else{
-		return 0, "Hay un problema con $por_que";
+		return 0, $por_que;
 	}
 
 }
 
-sub disponiblidad_pedido {
-	my $pedido = $_[0];
-	my $registro_reservas = $_[1];
-}
-
-
+# sub disponiblidad_pedido {
+# 	my $pedido = $_[0];
+# 	my $registro_reservas = $_[1];
+# }
 
 sub reservar_pedido {
+
 	my $p  = $_[0];
+	my $i  = $p->{item};
 	my $pedido_id = luniqid; # ID de pedido
-	my $pedido_identificado = $pedido_id;
 
-	# push $registros{$registros{$p->{item}}, $p:
+	my $pedido_embalado = {
+		cuando		=> $p->{cuando},
+		quien		=> $p->{quien},
+		comentario	=> $p->{comentario}
+	};
 
-	# my $p = $_[-1];
-	# push $_[0], $p;
 
-
-	# # mostrar esto en la matriz para ver que estebien
-	# print "+ Agregue la reserva: ";
-	# print_hash($_[0][-1]);
+	$registros{$i}{$pedido_id} = $pedido_embalado;
 
 }
 
 
 
 # Informes
+sub informe_reservas {
+	# header('Informe de Registros');
 
-sub informeReservas {
-	header('Informe de Registros');
-
-	foreach my $key ( sort keys %registros ){
-		my $cuantasReservas = scalar @{$registros{$key}{reservas}};
-		say "Item: $key -> $cuantasReservas reservas";
-	}
+	# foreach my $item ( sort keys %registros ){
+	# 	my $nPedidos = scalar @{$registros{$item}};
+	# 	say "Item: $item -> $nPedidos reservas";
+	# }
 }
 
 
 # Utiles
-
 # sub print_hash{
 # 	my $href = shift;
 # 	print "$_:$href->{$_} " for keys %{$href};
@@ -242,10 +257,9 @@ sub informeReservas {
 
 
 # Basura / Reserva
-
 # http://docstore.mik.ua/orelly/perl3/prog/ch03_15.htm
 
-#DATE RELATED
+# DATE RELATED
 # Converts a time as returned by the time function to a 9-element
 # list with the time analyzed for the local time zone. Typically
 # used as follows:
