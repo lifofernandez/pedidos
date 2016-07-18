@@ -4,7 +4,6 @@ use feature 'say';
 # use v5.20;
 use Data::Dumper;
 use Data::Uniqid qw ( luniqid );
-use DateTime;
 # use DateTime;
 use File::Slurp;
 use JSON;
@@ -103,17 +102,18 @@ sub comprobrar_pedido {
 
 			}else{
 
-				# Obtener timestamp retira y calcular vuelta
+				# Obtener timestamp retira
 				my $pedido_retira = POSIX::mktime(0,0,
 					$hora,$dia,$mes-1,$anio-1900);
+				# Calcular vuelta
 				my $pedido_vuelve = POSIX::mktime(0,0,
 					$hora+$duracion,$dia,$mes-1,$anio-1900);
 
 				$pedido_OK = {
-						item		=> $item,
-						cuando		=> $pedido_retira."-".$pedido_vuelve,
-						quien		=> $quien,
-						comentario	=> $comentario
+					item		=> $item,
+					cuando		=> $pedido_retira."-".$pedido_vuelve,
+					quien		=> $quien,
+					comentario	=> $comentario
 				};
 
 				if( $item_existe && $registros{$item} ){
@@ -172,6 +172,7 @@ sub fecha_correcta {
 	my $mes_correcto;
 	my $dia_correcto;
 	my $hora_correcta;
+
 	my $por_que;
 
 	if( ($mes => 1) && ($mes <= 12) ) {
@@ -201,8 +202,8 @@ sub fecha_correcta {
 }
 
 sub reservar_pedido {
-
 	my $p  = $_[0];
+
 	my $item  = $p->{item};
 	my $pedido_id = luniqid; # ID de pedido
 
