@@ -39,7 +39,7 @@ foreach (@pedidos){
 	}
 	procesar($_);
 }
-
+print Dumper(%registros) if $verbose;
 
 
 #
@@ -50,7 +50,6 @@ sub procesar{
 		$pedido_para_reservar
 	) = comprobrar_pedido($_);
 
-	print "\n" if $verbose;
 	say $mensaje;
 	if($aprobado){
 		reservar_pedido($pedido_para_reservar);
@@ -68,10 +67,11 @@ sub comprobrar_pedido {
 		$quien,
 		$comentario ) =  split /\,/, $_;
 
-	# Que el pedido este en condiciones
+	# Condiciones del pedido
 	my $item_existe;
 	my $duracion_correcta;
 	my $fecha_correcta;
+
 	# Dispnibilidad del item
 	my $sin_registros;
 	my $item_disponible;
@@ -166,7 +166,6 @@ sub comprobrar_pedido {
 	}
 }
 
-
 sub fecha_correcta {
 	my ($mes, $dia, $hora ) =  @_;
 
@@ -201,15 +200,10 @@ sub fecha_correcta {
 
 }
 
-# sub disponiblidad_pedido {
-# 	my $pedido = $_[0];
-# 	my $registro_reservas = $_[1];
-# }
-
 sub reservar_pedido {
 
 	my $p  = $_[0];
-	my $i  = $p->{item};
+	my $item  = $p->{item};
 	my $pedido_id = luniqid; # ID de pedido
 
 	my $pedido_embalado = {
@@ -218,41 +212,9 @@ sub reservar_pedido {
 		comentario	=> $p->{comentario}
 	};
 
-
-	$registros{$i}{$pedido_id} = $pedido_embalado;
-
+	$registros{$item}{$pedido_id} = $pedido_embalado;
 }
 
-
-
-# Informes
-sub informe_reservas {
-	# header('Informe de Registros');
-
-	# foreach my $item ( sort keys %registros ){
-	# 	my $nPedidos = scalar @{$registros{$item}};
-	# 	say "Item: $item -> $nPedidos reservas";
-	# }
-}
-
-
-# Utiles
-# sub print_hash{
-# 	my $href = shift;
-# 	print "$_:$href->{$_} " for keys %{$href};
-# }
-
-# sub header{
-# 	print "\n";
-# 	my $s = shift;
-# 	my $l = length $s;
-# 	my $dif = 26 - $l;
-# 	print "### ";
-# 	print $s;
-# 	print " ";
-# 	print "#"x$dif;
-# 	print "\n";
-# }
 
 
 
