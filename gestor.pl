@@ -4,7 +4,6 @@ use feature 'say';
 # use v5.20;
 use Data::Dumper;
 use Data::Uniqid qw ( luniqid );
-# use DateTime;
 use File::Slurp;
 use JSON;
 
@@ -14,7 +13,7 @@ if( 'v' ~~ @ARGV ){ $verbose = 1; }
 
 # Defaults Globales
 my ($sec,$min,$hour,$day,$month,$yr19,@rest) = localtime(time);
-my $anio = $yr19+1900; # año actual ¿salvo q se espesifique?
+my $anio = $yr19+1900; # año actual ¿salvo q se indique?
 my $limite_duracion = 24;
 
 # Inventario (items disponibles)
@@ -27,37 +26,41 @@ my @pedidos = read_file('pedidos.csv');
 # Registro (almacen de reservas)
 my $registro_text = read_file('registro.json');
 my $json = JSON->new;
-my $registroJson = $json->decode($registro_text);
-my %registros = %$registroJson;
+my $registro_json = $json->decode($registro_text);
+my %registros = %$registro_json;
 
-
+# Main Loop
 foreach (@pedidos){
 	# chomp;
 	if( $_ =~ /^\s*item,mes,/ ){ # borrrar primera linea
 		next;
 	}
-	procesar($_);
+	procesar_pedido($_);
 }
+
 print Dumper(%registros) if $verbose;
 
+# Grabar Registros
+my $registro_actualiado = $json->encode(\%registros);
+write_file( 'registro.json', $registro_actualiado );
 
-#
-sub procesar{
+
+# Subrutinas ### ### ###
+
+sub procesar_pedido{
 	my (
 		$aprobado,
 		$mensaje,
-		$pedido_para_reservar
+		$pedido
 	) = comprobrar_pedido($_);
-
 	say $mensaje;
+
 	if($aprobado){
-		reservar_pedido($pedido_para_reservar);
+		registrar_pedido($pedido);
 	}
 }
 
-# Subrutinas
 sub comprobrar_pedido {
-
 	my ($item,
 		$mes,
 		$dia,
@@ -79,32 +82,32 @@ sub comprobrar_pedido {
 	my $pedido_OK;
 
 	# Informacion para el usuario
-	my $por_que = "";
+	my $porque = "";
 	my $congrats = "";
 
 	if(!exists($inventario{$item})){
 		$item_existe = 0;
-		$por_que = "$item: No encontrado";
+		$porque = "$item: No encontrado";
 
 	}else {
 		$item_existe = 1;
 		if( ($duracion >= $limite_duracion) || ($duracion <= 0)  ){
-			$por_que = "Duracion: 0 <= $duracion? >= $limite_duracion";
+			$porque = "Duracion: 0 <= $duracion? >= $limite_duracion";
 
 		}else {
 			$duracion_correcta = 1;
-
 			my ($resultado, $mensaje) = fecha_correcta( $mes, $dia, $hora );
 			$fecha_correcta = $resultado;
 
 			if(!$fecha_correcta) {
-				$por_que = $mensaje;
+				$porque = $mensaje;
 
-			}else{
+			}else {
 
 				# Obtener timestamp retira
 				my $pedido_retira = POSIX::mktime(0,0,
 					$hora,$dia,$mes-1,$anio-1900);
+
 				# Calcular vuelta
 				my $pedido_vuelve = POSIX::mktime(0,0,
 					$hora+$duracion,$dia,$mes-1,$anio-1900);
@@ -116,24 +119,33 @@ sub comprobrar_pedido {
 					comentario	=> $comentario
 				};
 
-				if( $item_existe && $registros{$item} ){
-					foreach my $reserva ( keys %{$registros{$item}} ){
+				if($registros{$item}) {
+					# Consultar disponibilidad
+					my $libre = 0;
+					foreach my $reserva ( keys %{$registros{$item}} ) {
 						my (
 							$registro_retira,
 							$registro_vuelve
-						) = split /-/, $registros{$item}{$reserva}{'cuando'};
+						) = split /-/, $registros{$item}{$reserva}{cuando};
 
 						# http://c2.com/cgi/wiki?TestIfDateRangesOverlap
 						if( $pedido_retira < $registro_vuelve &&
 							$registro_retira < $pedido_vuelve ){
-							$por_que = "$item: Ocupado";
+							$libre = 0;
+							$porque = "$item: Ocupado";
+							next;
 						}else{
-							$item_disponible = 1;
-							$congrats = "$item: Disponible";
+							$libre = 1;
 						}
 					}
 
+					if($libre){
+						$item_disponible = 1;
+						$congrats = "$item: Disponible";
+					}
+
 				}else{
+					# Item con 0 reservas
 					$sin_registros = 1;
 					$congrats = "$item: Libre";
 				}
@@ -162,18 +174,17 @@ sub comprobrar_pedido {
 			"$dia/$mes:$hora\t".
 			"x$duracion\t".
 			"RECHAZADO\t".
-			"($por_que)";
+			"($porque)";
 	}
 }
 
 sub fecha_correcta {
 	my ($mes, $dia, $hora ) =  @_;
-
 	my $mes_correcto;
 	my $dia_correcto;
 	my $hora_correcta;
 
-	my $por_que;
+	my $porque;
 
 	if( ($mes => 1) && ($mes <= 12) ) {
 		$mes_correcto = 1;
@@ -184,24 +195,23 @@ sub fecha_correcta {
 			if ( $hora < 24 ){
 				$hora_correcta = 1;
 			}else{
-				$por_que = "HORA: $hora?"
+				$porque = "HORA: $hora?"
 			}
 		}else{
-			$por_que = "DIA: $dia?"
+			$porque = "DIA: $dia?"
 		}
 	}else{
-		$por_que = "MES: $mes?"
+		$porque = "MES: $mes?"
 	}
 
 	if( $mes_correcto && $dia_correcto && $hora_correcta ){
 		return 1;
 	}else{
-		return 0, $por_que;
+		return 0, $porque;
 	}
-
 }
 
-sub reservar_pedido {
+sub registrar_pedido {
 	my $p  = $_[0];
 
 	my $item  = $p->{item};
@@ -212,12 +222,11 @@ sub reservar_pedido {
 		quien		=> $p->{quien},
 		comentario	=> $p->{comentario}
 	};
-
 	$registros{$item}{$pedido_id} = $pedido_embalado;
 }
 
 
-
+# proximo > ESCRIBIR/GRABAR registros
 
 # Basura / Reserva
 # http://docstore.mik.ua/orelly/perl3/prog/ch03_15.htm
@@ -264,11 +273,11 @@ sub reservar_pedido {
 
 # my ( $item, $mes, $dia, $hora, $duracion ) =  split /\W/, $_;
 # my $pedidoItem = {
-# 	item => $item,
-# 	mes => $mes,
-# 	dia => $dia,
-# 	hora => $hora,
-# 	duracion => $duracion
+#   item => $item,
+#   mes => $mes,
+#   dia => $dia,
+#   hora => $hora,
+#   duracion => $duracion
 # };
 
 # header($item);
