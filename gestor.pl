@@ -120,9 +120,12 @@ sub comprobrar_pedido {
 				};
 
 				if($registros{$item}) {
+
 					# Consultar disponibilidad
-					my $libre = 0;
+					my $n_reservas_no_joden = 0;
+					my $n_reservas = 0;
 					foreach my $reserva ( keys %{$registros{$item}} ) {
+						$n_reservas++;
 						my (
 							$registro_retira,
 							$registro_vuelve
@@ -131,18 +134,21 @@ sub comprobrar_pedido {
 						# http://c2.com/cgi/wiki?TestIfDateRangesOverlap
 						if( $pedido_retira < $registro_vuelve &&
 							$registro_retira < $pedido_vuelve ){
-							$libre = 0;
-							$porque = "$item: Ocupado";
-							next;
 						}else{
-							$libre = 1;
+							$n_reservas_no_joden++;
 						}
+
 					}
 
-					if($libre){
+					if($n_reservas > $n_reservas_no_joden){
+						$item_disponible = 0;
+						$porque = "$item: Ocupado";
+					}else{
 						$item_disponible = 1;
 						$congrats = "$item: Disponible";
 					}
+
+
 
 				}else{
 					# Item con 0 reservas
@@ -223,6 +229,7 @@ sub registrar_pedido {
 		comentario	=> $p->{comentario}
 	};
 	$registros{$item}{$pedido_id} = $pedido_embalado;
+	say "ingreso pedido: $pedido_id";
 }
 
 
