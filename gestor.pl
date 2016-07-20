@@ -45,25 +45,32 @@ print Dumper(%registros) if $verbose;
 my $registro_actualizado = $json->encode(\%registros);
 write_file( 'registro.json', $registro_actualizado );
 
-# Subrutinas ### ### ###
 
+# Subrutinas ### ### ###
 sub procesar_linea{
 	my (
-		$aprobado,
 		$mensaje,
-		$pedido
+		$pedido_normalizado
 	) = formular_pedido($_);
-	say $mensaje;
 
 
+	# Procesar pedido
+	if($pedido_normalizado){
+		my (
+			$msj,
+			$pedido_disponible
+		) = disponibilidad($pedido_normalizado);
+		$mensaje .=  " -> ".$msj;
 
-	if($pedido){
-		registrar_pedido($pedido);
+		if($pedido_disponible){
+			$mensaje .= " -> ".registrar_pedido($pedido_disponible);
+		}
 	}
-
+	say $mensaje;
 }
 
 sub formular_pedido {
+
 	my (
 		$item,
 		$mes,
@@ -81,16 +88,11 @@ sub formular_pedido {
 	my $duracion_correcta;
 	my $fecha_correcta;
 
-	# Disponibilidad del item
-	my $sin_registros;
-	my $item_disponible;
-
-	# Pedido listo para reservar
+	# Pedido listo para procesar
 	my $pedido_OK;
 
 	# Informacion para el usuario
 	my $porque = "";
-	my $congrats = "";
 
 	if(!exists($inventario{$item})){
 		$item_existe = 0;
@@ -99,7 +101,7 @@ sub formular_pedido {
 	}else {
 		$item_existe = 1;
 		if( ($duracion >= $limite_duracion) || ($duracion <= 0)  ){
-			$porque = "Duracion: 0 <= $duracion? >= $limite_duracion";
+			$porque = "Duracion: 0 < $duracion? > $limite_duracion";
 
 		}else {
 			$duracion_correcta = 1;
@@ -119,13 +121,6 @@ sub formular_pedido {
 				my $pedido_vuelve = POSIX::mktime(0,0,
 					$hora+$duracion,$dia,$mes-1,$anio-1900);
 
-=pod
-ESTRUCTURA DE PEDIDO
-	Item ( como en inventario )
-	Cuando ( $pedido_retira."-".$pedido_vuelve )
-	Quien Hizo el pedido
-	Comentario
-=cut
 				$pedido_OK = {
 					item		=> $item,
 					cuando		=> $pedido_retira."-".$pedido_vuelve,
@@ -133,38 +128,14 @@ ESTRUCTURA DE PEDIDO
 					comentario	=> $comentario
 				};
 
-				if($registros{$item}) {
+=pod
+ESTRUCTURA DE PEDIDO
+	Item ( como en inventario )
+	Cuando ( $pedido_retira."-".$pedido_vuelve )
+	Quien Hizo el pedido
+	Comentario
+=cut
 
-					# Consultar disponibilidad
-					my $ocupado = 0;
-					foreach my $reserva ( keys %{$registros{$item}} ) {
-						my (
-							$registro_retira,
-							$registro_vuelve
-						) = split /-/, $registros{$item}{$reserva}{cuando};
-
-						# http://c2.com/cgi/wiki?TestIfDateRangesOverlap
-						if( $pedido_retira < $registro_vuelve &&
-							$registro_retira < $pedido_vuelve ){
-							$ocupado = 1;
-						}
-					}
-
-					if($ocupado){
-						$item_disponible = 0;
-						$porque = "$item: Ocupado";
-					}else{
-						$item_disponible = 1;
-						$congrats = "$item: Disponible";
-					}
-
-
-
-				}else{
-					# Item con 0 reservas
-					$sin_registros = 1;
-					$congrats = "$item: Libre";
-				}
 			}
 		}
 	}
@@ -172,24 +143,20 @@ ESTRUCTURA DE PEDIDO
 	if (
 		$item_existe &&
 		$duracion_correcta &&
-		$fecha_correcta &&
-		( $sin_registros || $item_disponible )
-		){
+		$fecha_correcta
+	){
 		return
-			1,
-			"$item\t".
-			"$dia/$mes:$hora\t".
-			"x$duracion\t".
-			"APROBADO\t".
-			"($congrats)",
+			"$item-".
+			"$dia/$mes:$hora".
+			"x$duracion -> ".
+			"pedido aprobado",
 			$pedido_OK;
 	}else{
 		return
-			0,
-			"$item\t".
-			"$dia/$mes:$hora\t".
-			"x$duracion\t".
-			"RECHAZADO\t".
+			"$item-".
+			"$dia/$mes:$hora".
+			"x$duracion -> ".
+			"pedido RECHAZADO ".
 			"($porque)";
 	}
 }
@@ -203,23 +170,25 @@ sub fecha_correcta {
 	my $hora_correcta;
 
 	my $porque;
+	my $limite_mes = cantidad_dias($mes);
+
 
 	if( ($mes >= 1) && ($mes <= 12) ) {
 		$mes_correcto = 1;
-		if( ($dia >= 1) && ($dia <= 31) ) {
-			# TO DO: 'Dias en el mes' dinamico :)
+		if( ($dia >= 1) && ($dia <= $limite_mes) ) {
+
 			$dia_correcto = 1;
 
 			if ( $hora < 24 ){
 				$hora_correcta = 1;
 			}else{
-				$porque = "HORA: $hora?"
+				$porque = "hora: $hora?"
 			}
 		}else{
-			$porque = "DIA: $dia?"
+			$porque = "dia: $dia? > $limite_mes"
 		}
 	}else{
-		$porque = "MES: $mes?"
+		$porque = "mes: $mes?"
 	}
 
 	if( $mes_correcto && $dia_correcto && $hora_correcta ){
@@ -229,6 +198,16 @@ sub fecha_correcta {
 	}
 }
 
+sub cantidad_dias{
+	my $month = $_[0];
+	# Agregar anios bisiestos
+	my %mon2num = qw(
+		1 31  2 28  3 31  4 30  5 31  6 30
+		7 31  8 30  9 31  10 31  11 30  12 31
+	);
+
+	return $mon2num{ lc substr($month, 0, 3) };
+}
 
 sub disponibilidad{
 
@@ -236,7 +215,7 @@ sub disponibilidad{
 	my $item   = $p->{item};
 	my $ocupado = 0;
 
-	if($registros{$item}){
+	if($registros{$item}) {
 
 		my (
 			$pedido_retira,
@@ -254,12 +233,15 @@ sub disponibilidad{
 			if( $pedido_retira < $registro_vuelve &&
 				$registro_retira < $pedido_vuelve ){
 				$ocupado = 1;
+				# Aca habria que dar info de cual molesta?
 			}
 		}
 	}
 
 	if(!$ocupado){
-		return $p;
+		return "item disponible",$p;
+	}else{
+		return "item OCUPADO";
 	}
 }
 
@@ -275,7 +257,7 @@ sub registrar_pedido {
 		comentario	=> $p->{comentario}
 	};
 	$registros{$item}{$pedido_id} = $pedido_embalado;
-	say "\tingreso pedido: $pedido_id";
+	return "RESERVO: $pedido_id";
 }
 
 
