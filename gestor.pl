@@ -35,7 +35,7 @@ foreach (@pedidos){
 	if( $_ =~ /^\s*item,mes,/ ){ # borrrar primera linea
 		next;
 	}
-	procesar_pedido($_);
+	procesar_linea($_);
 }
 
 print Dumper(%registros) if $verbose;
@@ -47,7 +47,7 @@ write_file( 'registro.json', $registro_actualiado );
 
 # Subrutinas ### ### ###
 
-sub procesar_pedido{
+sub procesar_linea{
 	my (
 		$aprobado,
 		$mensaje,
@@ -61,13 +61,15 @@ sub procesar_pedido{
 }
 
 sub comprobrar_pedido {
-	my ($item,
+	my (
+		$item,
 		$mes,
 		$dia,
 		$hora,
 		$duracion,
 		$quien,
-		$comentario ) =  split /\,/, $_;
+		$comentario
+	) =  split /\,/, $_;
 
 	# Condiciones del pedido
 	my $item_existe;
@@ -122,10 +124,8 @@ sub comprobrar_pedido {
 				if($registros{$item}) {
 
 					# Consultar disponibilidad
-					my $n_reservas_no_joden = 0;
-					my $n_reservas = 0;
+					my $ocupado = 0;
 					foreach my $reserva ( keys %{$registros{$item}} ) {
-						$n_reservas++;
 						my (
 							$registro_retira,
 							$registro_vuelve
@@ -134,13 +134,11 @@ sub comprobrar_pedido {
 						# http://c2.com/cgi/wiki?TestIfDateRangesOverlap
 						if( $pedido_retira < $registro_vuelve &&
 							$registro_retira < $pedido_vuelve ){
-						}else{
-							$n_reservas_no_joden++;
+							$ocupado = 1;
 						}
-
 					}
 
-					if($n_reservas > $n_reservas_no_joden){
+					if($ocupado){
 						$item_disponible = 0;
 						$porque = "$item: Ocupado";
 					}else{
@@ -229,11 +227,10 @@ sub registrar_pedido {
 		comentario	=> $p->{comentario}
 	};
 	$registros{$item}{$pedido_id} = $pedido_embalado;
-	say "ingreso pedido: $pedido_id";
+	say "\tingreso pedido: $pedido_id";
 }
 
 
-# proximo > ESCRIBIR/GRABAR registros
 
 # Basura / Reserva
 # http://docstore.mik.ua/orelly/perl3/prog/ch03_15.htm
