@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 use strict;
 use warnings;
 use feature 'say';
@@ -41,8 +42,8 @@ foreach (@pedidos){
 print Dumper(%registros) if $verbose;
 
 # Grabar Registros
-my $registro_actualiado = $json->encode(\%registros);
-write_file( 'registro.json', $registro_actualiado );
+my $registro_actualizado = $json->encode(\%registros);
+write_file( 'registro.json', $registro_actualizado );
 
 
 # Subrutinas ### ### ###
@@ -55,7 +56,7 @@ sub procesar_linea{
 	) = comprobrar_pedido($_);
 	say $mensaje;
 
-	if($aprobado){
+	if($pedido){
 		registrar_pedido($pedido);
 	}
 }
@@ -73,6 +74,8 @@ sub comprobrar_pedido {
 
 	# Condiciones del pedido
 	my $item_existe;
+
+	# Integridad de las fechas
 	my $duracion_correcta;
 	my $fecha_correcta;
 
@@ -81,7 +84,7 @@ sub comprobrar_pedido {
 	my $item_disponible;
 
 	# Pedido listo para reservar
-	my $pedido_OK;
+	my $pedido_disponible;
 
 	# Informacion para el usuario
 	my $porque = "";
@@ -114,7 +117,7 @@ sub comprobrar_pedido {
 				my $pedido_vuelve = POSIX::mktime(0,0,
 					$hora+$duracion,$dia,$mes-1,$anio-1900);
 
-				$pedido_OK = {
+				$pedido_disponible = {
 					item		=> $item,
 					cuando		=> $pedido_retira."-".$pedido_vuelve,
 					quien		=> $quien,
@@ -170,7 +173,7 @@ sub comprobrar_pedido {
 			"x$duracion\t".
 			"APROBADO\t".
 			"($congrats)",
-			$pedido_OK;
+			$pedido_disponible;
 	}else{
 		return
 			0,
@@ -182,17 +185,19 @@ sub comprobrar_pedido {
 	}
 }
 
+
 sub fecha_correcta {
 	my ($mes, $dia, $hora ) =  @_;
+
 	my $mes_correcto;
 	my $dia_correcto;
 	my $hora_correcta;
 
 	my $porque;
 
-	if( ($mes => 1) && ($mes <= 12) ) {
+	if( ($mes >= 1) && ($mes <= 12) ) {
 		$mes_correcto = 1;
-		if( ($dia => 1) && ($dia <= 31) ) {
+		if( ($dia >= 1) && ($dia <= 31) ) {
 			# TO DO: 'Dias en el mes' dinamico :)
 			$dia_correcto = 1;
 
