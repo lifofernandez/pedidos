@@ -45,7 +45,6 @@ print Dumper(%registros) if $verbose;
 my $registro_actualizado = $json->encode(\%registros);
 write_file( 'registro.json', $registro_actualizado );
 
-
 # Subrutinas ### ### ###
 
 sub procesar_linea{
@@ -53,15 +52,18 @@ sub procesar_linea{
 		$aprobado,
 		$mensaje,
 		$pedido
-	) = comprobrar_pedido($_);
+	) = formular_pedido($_);
 	say $mensaje;
+
+
 
 	if($pedido){
 		registrar_pedido($pedido);
 	}
+
 }
 
-sub comprobrar_pedido {
+sub formular_pedido {
 	my (
 		$item,
 		$mes,
@@ -79,12 +81,12 @@ sub comprobrar_pedido {
 	my $duracion_correcta;
 	my $fecha_correcta;
 
-	# Dispnibilidad del item
+	# Disponibilidad del item
 	my $sin_registros;
 	my $item_disponible;
 
 	# Pedido listo para reservar
-	my $pedido_disponible;
+	my $pedido_OK;
 
 	# Informacion para el usuario
 	my $porque = "";
@@ -117,7 +119,14 @@ sub comprobrar_pedido {
 				my $pedido_vuelve = POSIX::mktime(0,0,
 					$hora+$duracion,$dia,$mes-1,$anio-1900);
 
-				$pedido_disponible = {
+=pod
+ESTRUCTURA DE PEDIDO
+	Item ( como en inventario )
+	Cuando ( $pedido_retira."-".$pedido_vuelve )
+	Quien Hizo el pedido
+	Comentario
+=cut
+				$pedido_OK = {
 					item		=> $item,
 					cuando		=> $pedido_retira."-".$pedido_vuelve,
 					quien		=> $quien,
@@ -173,7 +182,7 @@ sub comprobrar_pedido {
 			"x$duracion\t".
 			"APROBADO\t".
 			"($congrats)",
-			$pedido_disponible;
+			$pedido_OK;
 	}else{
 		return
 			0,
@@ -217,6 +226,40 @@ sub fecha_correcta {
 		return 1;
 	}else{
 		return 0, $porque;
+	}
+}
+
+
+sub disponibilidad{
+
+	my $p  = $_[0];
+	my $item   = $p->{item};
+	my $ocupado = 0;
+
+	if($registros{$item}){
+
+		my (
+			$pedido_retira,
+			$pedido_vuelve
+		) = split /-/, $p->{cuando};
+
+		# Consultar reservas
+		foreach my $reserva ( keys %{$registros{$item}} ) {
+			my (
+				$registro_retira,
+				$registro_vuelve
+			) = split /-/, $registros{$item}{$reserva}{cuando};
+
+			# http://c2.com/cgi/wiki?TestIfDateRangesOverlap
+			if( $pedido_retira < $registro_vuelve &&
+				$registro_retira < $pedido_vuelve ){
+				$ocupado = 1;
+			}
+		}
+	}
+
+	if(!$ocupado){
+		return $p;
 	}
 }
 
