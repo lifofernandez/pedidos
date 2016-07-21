@@ -15,6 +15,9 @@ if( 'v' ~~ @ARGV ){ $verbose = 1; }
 # Defaults Globales
 my ($sec,$min,$hour,$day,$month,$yr19,@rest) = localtime(time);
 my $anio = $yr19+1900; # año actual ¿salvo q se indique?
+
+
+
 my $limite_duracion = 24;
 
 # Inventario (items disponibles)
@@ -49,7 +52,7 @@ write_file( 'registro.json', $registro_actualizado );
 # Subrutinas ### ### ###
 sub procesar_linea{
 	my (
-		$mensaje,
+		$reporte,
 		$pedido_normalizado
 	) = formular_pedido($_);
 
@@ -60,13 +63,13 @@ sub procesar_linea{
 			$msj,
 			$pedido_disponible
 		) = disponibilidad($pedido_normalizado);
-		$mensaje .=  " -> ".$msj;
+		$reporte .=  " -> ".$msj;
 
 		if($pedido_disponible){
-			$mensaje .= " -> ".registrar_pedido($pedido_disponible);
+			$reporte .= " -> ".registrar_pedido($pedido_disponible);
 		}
 	}
-	say $mensaje;
+	say $reporte;
 }
 
 sub formular_pedido {
@@ -146,17 +149,17 @@ ESTRUCTURA DE PEDIDO
 		$fecha_correcta
 	){
 		return
-			"$item-".
-			"$dia/$mes:$hora".
-			"x$duracion -> ".
-			"pedido aprobado",
+			"[$item-".
+			"$anio/$mes/$dia:$hora".
+			"x$duracion] ".
+			"aprobado",
 			$pedido_OK;
 	}else{
 		return
-			"$item-".
-			"$dia/$mes:$hora".
-			"x$duracion -> ".
-			"pedido RECHAZADO ".
+			"[$item-".
+			"$anio/$mes/$dia:$hora".
+			"x$duracion] ".
+			"RECHAZADO ".
 			"($porque)";
 	}
 }
@@ -182,13 +185,13 @@ sub fecha_correcta {
 			if ( $hora < 24 ){
 				$hora_correcta = 1;
 			}else{
-				$porque = "hora: $hora?"
+				$porque = "hora $hora?"
 			}
 		}else{
-			$porque = "dia: $dia? > $limite_mes"
+			$porque = "dia $dia > $limite_mes?"
 		}
 	}else{
-		$porque = "mes: $mes?"
+		$porque = "mes $mes?"
 	}
 
 	if( $mes_correcto && $dia_correcto && $hora_correcta ){
@@ -200,13 +203,35 @@ sub fecha_correcta {
 
 sub cantidad_dias{
 	my $month = $_[0];
-	# Agregar anios bisiestos
+
 	my %mon2num = qw(
 		1 31  2 28  3 31  4 30  5 31  6 30
 		7 31  8 30  9 31  10 31  11 30  12 31
 	);
-
+	# ARevisar esto
+	if(es_bisiesto($anio)){
+		%mon2num = qw(
+			1 31  2 29  3 31  4 30  5 31  6 30
+			7 31  8 30  9 31  10 31  11 30  12 31
+		);
+	}
 	return $mon2num{ lc substr($month, 0, 3) };
+}
+
+sub es_bisiesto{
+	my $y = shift;
+	my $bisiesto = 0;
+	if($y =~ /^\d+?$/) {
+		if(!($y % 400)){
+			$bisiesto = 1;
+		}elsif(!($y % 100)){
+			$bisiesto = 0;
+		}
+		elsif(!($y % 4  )){
+			$bisiesto = 1;
+		}
+	}
+	return $bisiesto;
 }
 
 sub disponibilidad{
@@ -239,9 +264,9 @@ sub disponibilidad{
 	}
 
 	if(!$ocupado){
-		return "item disponible",$p;
+		return "recurso disponible",$p;
 	}else{
-		return "item OCUPADO";
+		return "recurso OCUPADO";
 	}
 }
 
