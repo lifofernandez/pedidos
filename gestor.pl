@@ -39,7 +39,28 @@ foreach (@pedidos){
 	if( $_ =~ /^\s*item,mes,/ ){ # borrrar primera linea
 		next;
 	}
-	procesar_linea($_);
+
+	# item, mes, dia, hora, duracion, quien, comentario
+	my ( $i, $m, $d, $h, $l, $q, $c ) =  split /\,/, $_;
+
+	# Normalizar Pedido
+	my ( $reporte, $pedido_normalizado )
+		= formular_pedido($i, $m, $d, $h, $l, $q, $c);
+
+	# Procesar Pedido
+	if($pedido_normalizado){
+		my (
+			$msj,
+			$pedido_disponible
+		) = disponibilidad($pedido_normalizado);
+		$reporte .=  " -> ".$msj;
+
+		# Ingresar Pedido
+		if($pedido_disponible){
+			$reporte .= " -> ".registrar_pedido($pedido_disponible);
+		}
+	}
+	say $reporte;
 }
 
 print Dumper(%registros) if $verbose;
@@ -50,27 +71,6 @@ write_file( 'registro.json', $registro_actualizado );
 
 
 # Subrutinas ### ### ###
-sub procesar_linea{
-	my (
-		$reporte,
-		$pedido_normalizado
-	) = formular_pedido($_);
-
-
-	# Procesar pedido
-	if($pedido_normalizado){
-		my (
-			$msj,
-			$pedido_disponible
-		) = disponibilidad($pedido_normalizado);
-		$reporte .=  " -> ".$msj;
-
-		if($pedido_disponible){
-			$reporte .= " -> ".registrar_pedido($pedido_disponible);
-		}
-	}
-	say $reporte;
-}
 
 sub formular_pedido {
 
@@ -82,7 +82,7 @@ sub formular_pedido {
 		$duracion,
 		$quien,
 		$comentario
-	) =  split /\,/, $_;
+	) = @_;
 
 	# Condiciones del pedido
 	my $item_existe;
