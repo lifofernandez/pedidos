@@ -202,20 +202,20 @@ sub fecha_correcta {
 }
 
 sub cantidad_dias{
-	my $month = $_[0];
+	my $m = $_[0];
 
-	my %mon2num = qw(
+	my %mes2dias = qw(
 		1 31  2 28  3 31  4 30  5 31  6 30
 		7 31  8 30  9 31  10 31  11 30  12 31
 	);
 	# Revisar esto
 	if(es_bisiesto($anio)){
-		%mon2num = qw(
+		%mes2dias = qw(
 			1 31  2 29  3 31  4 30  5 31  6 30
 			7 31  8 30  9 31  10 31  11 30  12 31
 		);
 	}
-	return $mon2num{ lc substr($month, 0, 3) };
+	return $mes2dias{ lc substr($m, 0, 3) };
 }
 
 sub es_bisiesto{
@@ -226,8 +226,7 @@ sub es_bisiesto{
 			$bisiesto = 1;
 		}elsif(!($y % 100)){
 			$bisiesto = 0;
-		}
-		elsif(!($y % 4  )){
+		}elsif(!($y % 4)){
 			$bisiesto = 1;
 		}
 	}
