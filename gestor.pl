@@ -208,7 +208,7 @@ sub cantidad_dias{
 		1 31  2 28  3 31  4 30  5 31  6 30
 		7 31  8 30  9 31  10 31  11 30  12 31
 	);
-	# ARevisar esto
+	# Revisar esto
 	if(es_bisiesto($anio)){
 		%mon2num = qw(
 			1 31  2 29  3 31  4 30  5 31  6 30
@@ -236,8 +236,8 @@ sub es_bisiesto{
 
 sub disponibilidad{
 
-	my $p  = $_[0];
-	my $item   = $p->{item};
+	my $p = $_[0];
+	my $item = $p->{item};
 	my $ocupado = 0;
 
 	if($registros{$item}) {
